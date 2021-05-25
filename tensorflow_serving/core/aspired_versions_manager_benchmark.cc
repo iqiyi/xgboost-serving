@@ -26,7 +26,8 @@ limitations under the License.
 #include <string>
 #include <vector>
 
-#include "tensorflow/core/kernels/batching_util/periodic_function.h"
+// #include "tensorflow/core/kernels/batching_util/periodic_function.h"
+#include "tensorflow_serving/util/tensorflow/periodic_function.h"
 #include "tensorflow/core/lib/core/notification.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/core/threadpool.h"

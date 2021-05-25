@@ -30,7 +30,7 @@ limitations under the License.
 #include "grpcpp/support/status.h"
 #include "absl/memory/memory.h"
 #include "tensorflow/c/c_api.h"
-#include "tensorflow/cc/saved_model/tag_constants.h"
+// #include "tensorflow/cc/saved_model/tag_constants.h"
 #include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/strings/numbers.h"
@@ -45,9 +45,9 @@ limitations under the License.
 #include "tensorflow_serving/core/availability_preserving_policy.h"
 #include "tensorflow_serving/model_servers/grpc_status_util.h"
 #include "tensorflow_serving/model_servers/model_platform_types.h"
-#include "tensorflow_serving/model_servers/platform_config_util.h"
 #include "tensorflow_serving/model_servers/server_core.h"
-#include "tensorflow_serving/servables/tensorflow/session_bundle_config.pb.h"
+
+#include <brpc/server.h>
 
 namespace tensorflow {
 namespace serving {
@@ -149,8 +149,7 @@ BuildServerCredentialsFromSSLConfigFile(const string& ssl_config_file) {
 }  // namespace
 
 Server::Options::Options()
-    : model_name("default"),
-      saved_model_tags(tensorflow::kSavedModelTagServe) {}
+    : model_name("default") {}
 
 Server::~Server() {
   // Note: Deletion of 'fs_polling_thread_' will block until our underlying
@@ -177,9 +176,7 @@ void Server::PollFilesystemAndReloadConfig(const string& config_file_path) {
   }
 }
 
-Status Server::BuildAndStart(const Options& server_options) {
-  const bool use_saved_model = true;
-
+Status Server::BuildAndStartXGBoost(const Options& server_options) {
   if (server_options.grpc_port == 0) {
     return errors::InvalidArgument("server_options.grpc_port is not set.");
   }
@@ -203,77 +200,10 @@ Status Server::BuildAndStart(const Options& server_options) {
     TF_RETURN_IF_ERROR(ParseProtoTextFile<ModelServerConfig>(
         server_options.model_config_file, &options.model_server_config));
   }
-
-  if (server_options.platform_config_file.empty()) {
-    SessionBundleConfig session_bundle_config;
-    // Batching config
-    if (server_options.enable_batching) {
-      BatchingParameters* batching_parameters =
-          session_bundle_config.mutable_batching_parameters();
-      if (server_options.batching_parameters_file.empty()) {
-        batching_parameters->mutable_thread_pool_name()->set_value(
-            "model_server_batch_threads");
-      } else {
-        TF_RETURN_IF_ERROR(ParseProtoTextFile<BatchingParameters>(
-            server_options.batching_parameters_file, batching_parameters));
-      }
-    } else if (!server_options.batching_parameters_file.empty()) {
-      return errors::InvalidArgument(
-          "server_options.batching_parameters_file is set without setting "
-          "server_options.enable_batching to true.");
-    }
-
-    session_bundle_config.mutable_session_config()
-        ->mutable_gpu_options()
-        ->set_per_process_gpu_memory_fraction(
-            server_options.per_process_gpu_memory_fraction);
-
-    if (server_options.tensorflow_intra_op_parallelism > 0 &&
-        server_options.tensorflow_inter_op_parallelism > 0 &&
-        server_options.tensorflow_session_parallelism > 0){
-        return errors::InvalidArgument("Either configure "
-          "server_options.tensorflow_session_parallelism "
-          "or (server_options.tensorflow_intra_op_parallelism, "
-          "server_options.tensorflow_inter_op_parallelism) separately. "
-          "You cannot configure all.");
-    } else if (server_options.tensorflow_intra_op_parallelism > 0 ||
-        server_options.tensorflow_inter_op_parallelism > 0){
-            session_bundle_config.mutable_session_config()
-            ->set_intra_op_parallelism_threads(
-                server_options.tensorflow_intra_op_parallelism);
-            session_bundle_config.mutable_session_config()
-            ->set_inter_op_parallelism_threads(
-                server_options.tensorflow_inter_op_parallelism);
-    } else {
-        session_bundle_config.mutable_session_config()
-        ->set_intra_op_parallelism_threads(
-            server_options.tensorflow_session_parallelism);
-        session_bundle_config.mutable_session_config()
-        ->set_inter_op_parallelism_threads(
-            server_options.tensorflow_session_parallelism);
-    }
-
-    const std::vector<string> tags =
-        tensorflow::str_util::Split(server_options.saved_model_tags, ",");
-    for (const string& tag : tags) {
-      *session_bundle_config.add_saved_model_tags() = tag;
-    }
-    session_bundle_config.set_enable_model_warmup(
-        server_options.enable_model_warmup);
-    if (server_options.num_request_iterations_for_warmup > 0) {
-      session_bundle_config.mutable_model_warmup_options()
-          ->mutable_num_request_iterations()
-          ->set_value(server_options.num_request_iterations_for_warmup);
-    }
-    session_bundle_config.set_remove_unused_fields_from_bundle_metagraph(
-        server_options.remove_unused_fields_from_bundle_metagraph);
-    session_bundle_config.set_use_tflite_model(server_options.use_tflite_model);
-    options.platform_config_map = CreateTensorFlowPlatformConfigMap(
-        session_bundle_config, use_saved_model);
-  } else {
-    TF_RETURN_IF_ERROR(ParseProtoTextFile<PlatformConfigMap>(
-        server_options.platform_config_file, &options.platform_config_map));
+  if(server_options.platform_config_file.empty()) {
+    return errors::InvalidArgument("server_options.platform_config_file mustn't be empty.");
   }
+  TF_RETURN_IF_ERROR(ParseProtoTextFile<PlatformConfigMap>(server_options.platform_config_file, &options.platform_config_map));
 
   options.custom_model_config_loader = &LoadCustomModelConfig;
   options.aspired_version_policy =
@@ -312,13 +242,8 @@ Status Server::BuildAndStart(const Options& server_options) {
       "0.0.0.0:" + std::to_string(server_options.grpc_port);
   model_service_ = absl::make_unique<ModelServiceImpl>(server_core_.get());
 
-  PredictionServiceImpl::Options predict_server_options;
-  predict_server_options.server_core = server_core_.get();
-  predict_server_options.use_saved_model = use_saved_model;
-  predict_server_options.enforce_session_run_timeout =
-      server_options.enforce_session_run_timeout;
-  prediction_service_ =
-      absl::make_unique<PredictionServiceImpl>(predict_server_options);
+  xgboost_prediction_service_ =
+      absl::make_unique<XgboostPredictionServiceImpl>(server_core_.get());
   ::grpc::ServerBuilder builder;
   builder.AddListeningPort(
       server_address,
@@ -331,8 +256,9 @@ Status Server::BuildAndStart(const Options& server_options) {
                                  server_options.ssl_config_file));
   }
   builder.RegisterService(model_service_.get());
-  builder.RegisterService(prediction_service_.get());
-  builder.SetMaxMessageSize(tensorflow::kint32max);
+  builder.RegisterService(xgboost_prediction_service_.get());
+  builder.SetMaxReceiveMessageSize(tensorflow::kint32max);
+  builder.SetMaxSendMessageSize(tensorflow::kint32max);
   const std::vector<GrpcChannelArgument> channel_arguments =
       parseGrpcChannelArgs(server_options.grpc_channel_arguments);
   for (GrpcChannelArgument channel_argument : channel_arguments) {
@@ -379,6 +305,9 @@ Status Server::BuildAndStart(const Options& server_options) {
                  << "Please use a different port for HTTP/REST API. "
                  << "Skipped exporting HTTP/REST API.";
     }
+  }
+  if (0 != server_options.brpc_port) {
+    brpc::StartDummyServerAt(server_options.brpc_port);
   }
   return Status::OK();
 }

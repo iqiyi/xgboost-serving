@@ -24,27 +24,28 @@ limitations under the License.
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_replace.h"
 #include "absl/time/time.h"
-#include "tensorflow/cc/saved_model/loader.h"
-#include "tensorflow/cc/saved_model/signature_constants.h"
+// #include "tensorflow/cc/saved_model/loader.h"
+// #include "tensorflow/cc/saved_model/signature_constants.h"
 #include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow_serving/apis/model.pb.h"
 #include "tensorflow_serving/apis/predict.pb.h"
 #include "tensorflow_serving/core/servable_handle.h"
 #include "tensorflow_serving/model_servers/get_model_status_impl.h"
 #include "tensorflow_serving/model_servers/server_core.h"
-#include "tensorflow_serving/servables/tensorflow/classification_service.h"
-#include "tensorflow_serving/servables/tensorflow/get_model_metadata_impl.h"
-#include "tensorflow_serving/servables/tensorflow/predict_impl.h"
-#include "tensorflow_serving/servables/tensorflow/regression_service.h"
 #include "tensorflow_serving/util/json_tensor.h"
+
+#include <chrono>
 
 namespace tensorflow {
 namespace serving {
+
+bvar::LatencyRecorder HttpRestApiHandler::http_latency_recorder("http_xgboost_serving");
 
 using protobuf::util::JsonPrintOptions;
 using protobuf::util::MessageToJsonString;
 using tensorflow::serving::ServerCore;
 using tensorflow::serving::TensorflowPredictor;
+using tensorflow::serving::XgboostPredictor;
 
 const char* const HttpRestApiHandler::kPathRegex = "(?i)/v1/.*";
 
@@ -52,7 +53,7 @@ HttpRestApiHandler::HttpRestApiHandler(const RunOptions& run_options,
                                        ServerCore* core)
     : run_options_(run_options),
       core_(core),
-      predictor_(new TensorflowPredictor(true /* use_saved_model */)),
+      predictor_(new XgboostPredictor()),
       prediction_api_regex_(
           R"((?i)/v1/models/([^/:]+)(?:/versions/(\d+))?:(classify|regress|predict))"),
       modelstatus_api_regex_(
@@ -102,13 +103,7 @@ Status HttpRestApiHandler::ProcessRequest(
       }
       model_version = version;
     }
-    if (method == "classify") {
-      status = ProcessClassifyRequest(model_name, model_version, request_body,
-                                      output);
-    } else if (method == "regress") {
-      status = ProcessRegressRequest(model_name, model_version, request_body,
-                                     output);
-    } else if (method == "predict") {
+    if (method == "predict") {
       status = ProcessPredictRequest(model_name, model_version, request_body,
                                      output);
     }
@@ -117,8 +112,8 @@ Status HttpRestApiHandler::ProcessRequest(
                             &model_name, &model_version_str,
                             &model_subresource)) {
     if (!model_subresource.empty() && model_subresource == "metadata") {
-      status =
-          ProcessModelMetadataRequest(model_name, model_version_str, output);
+      // status =
+      //     ProcessModelMetadataRequest(model_name, model_version_str, output);
     } else {
       status = ProcessModelStatusRequest(model_name, model_version_str, output);
     }
@@ -130,49 +125,11 @@ Status HttpRestApiHandler::ProcessRequest(
   return status;
 }
 
-Status HttpRestApiHandler::ProcessClassifyRequest(
-    const absl::string_view model_name,
-    const absl::optional<int64>& model_version,
-    const absl::string_view request_body, string* output) {
-  ClassificationRequest request;
-  request.mutable_model_spec()->set_name(string(model_name));
-  if (model_version.has_value()) {
-    request.mutable_model_spec()->mutable_version()->set_value(
-        model_version.value());
-  }
-  TF_RETURN_IF_ERROR(FillClassificationRequestFromJson(request_body, &request));
-
-  ClassificationResponse response;
-  TF_RETURN_IF_ERROR(TensorflowClassificationServiceImpl::Classify(
-      run_options_, core_, request, &response));
-  TF_RETURN_IF_ERROR(
-      MakeJsonFromClassificationResult(response.result(), output));
-  return Status::OK();
-}
-
-Status HttpRestApiHandler::ProcessRegressRequest(
-    const absl::string_view model_name,
-    const absl::optional<int64>& model_version,
-    const absl::string_view request_body, string* output) {
-  RegressionRequest request;
-  request.mutable_model_spec()->set_name(string(model_name));
-  if (model_version.has_value()) {
-    request.mutable_model_spec()->mutable_version()->set_value(
-        model_version.value());
-  }
-  TF_RETURN_IF_ERROR(FillRegressionRequestFromJson(request_body, &request));
-
-  RegressionResponse response;
-  TF_RETURN_IF_ERROR(TensorflowRegressionServiceImpl::Regress(
-      run_options_, core_, request, &response));
-  TF_RETURN_IF_ERROR(MakeJsonFromRegressionResult(response.result(), output));
-  return Status::OK();
-}
-
 Status HttpRestApiHandler::ProcessPredictRequest(
     const absl::string_view model_name,
     const absl::optional<int64>& model_version,
     const absl::string_view request_body, string* output) {
+  auto start = std::chrono::system_clock::now();
   PredictRequest request;
   request.mutable_model_spec()->set_name(string(model_name));
   if (model_version.has_value()) {
@@ -180,17 +137,19 @@ Status HttpRestApiHandler::ProcessPredictRequest(
         model_version.value());
   }
   JsonPredictRequestFormat format;
-  TF_RETURN_IF_ERROR(FillPredictRequestFromJson(
-      request_body,
-      [this, &request](const string& sig,
-                       ::google::protobuf::Map<string, TensorInfo>* map) {
-        return this->GetInfoMap(request.model_spec(), sig, map);
-      },
-      &request, &format));
+  // TF_RETURN_IF_ERROR(FillPredictRequestFromJson(
+  //     request_body,
+  //     [this, &request](const string& sig,
+  //                      ::google::protobuf::Map<string, TensorInfo>* map) {
+  //       return this->GetInfoMap(request.model_spec(), sig, map);
+  //     },
+  //     &request, &format));
 
   PredictResponse response;
-  TF_RETURN_IF_ERROR(
-      predictor_->Predict(run_options_, core_, request, &response));
+  TF_RETURN_IF_ERROR(predictor_->Predict(core_, request, &response));
+  auto end = std::chrono::system_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end - start;
+  http_latency_recorder<<elapsed_seconds.count()*1000000;
   TF_RETURN_IF_ERROR(MakeJsonFromTensors(response.outputs(), format, output));
   return Status::OK();
 }
@@ -229,94 +188,95 @@ Status HttpRestApiHandler::ProcessModelStatusRequest(
   return Status::OK();
 }
 
-Status HttpRestApiHandler::ProcessModelMetadataRequest(
-    const absl::string_view model_name,
-    const absl::string_view model_version_str, string* output) {
-  GetModelMetadataRequest request;
-  if (model_name.empty()) {
-    return errors::InvalidArgument("Missing model name in request.");
-  }
-  request.mutable_model_spec()->set_name(string(model_name));
-  // We currently only support the kSignatureDef metadata field
-  request.add_metadata_field(GetModelMetadataImpl::kSignatureDef);
-  if (!model_version_str.empty()) {
-    int64 version;
-    if (!absl::SimpleAtoi(model_version_str, &version)) {
-      return errors::InvalidArgument(
-          "Failed to convert version: ", model_version_str, " to numeric.");
-    }
-    request.mutable_model_spec()->mutable_version()->set_value(version);
-  }
-
-  GetModelMetadataResponse response;
-  TF_RETURN_IF_ERROR(
-      GetModelMetadataImpl::GetModelMetadata(core_, request, &response));
-  JsonPrintOptions opts;
-  opts.add_whitespace = true;
-  opts.always_print_primitive_fields = true;
-  // TODO(b/118381513): preserving proto field names on 'Any' fields has been
-  // fixed in the master branch of OSS protobuf but the TF ecosystem is
-  // currently using v3.6.0 where the fix is not present. To resolve the issue
-  // we invoke MessageToJsonString on invididual fields and concatenate the
-  // resulting strings and make it valid JSON that conforms with the response we
-  // expect.
-  opts.preserve_proto_field_names = true;
-
-  string model_spec_output;
-  const auto& status1 =
-      MessageToJsonString(response.model_spec(), &model_spec_output, opts);
-  if (!status1.ok()) {
-    return errors::Internal(
-        "Failed to convert model spec proto to json. Error: ",
-        status1.ToString());
-  }
-
-  tensorflow::serving::SignatureDefMap signature_def_map;
-  if (response.metadata().end() ==
-      response.metadata().find(GetModelMetadataImpl::kSignatureDef)) {
-    return errors::Internal(
-        "Failed to find 'signature_def' key in the GetModelMetadataResponse "
-        "metadata map.");
-  }
-  bool unpack_status = response.metadata()
-                           .at(GetModelMetadataImpl::kSignatureDef)
-                           .UnpackTo(&signature_def_map);
-  if (!unpack_status) {
-    return errors::Internal(
-        "Failed to unpack 'Any' object to 'SignatureDefMap'.");
-  }
-
-  string signature_def_output;
-  const auto& status2 =
-      MessageToJsonString(signature_def_map, &signature_def_output, opts);
-  if (!status2.ok()) {
-    return errors::Internal(
-        "Failed to convert signature def proto to json. Error: ",
-        status2.ToString());
-  }
-
-  // Concatenate the resulting strings into a valid JSON format.
-  absl::StrAppend(output, "{\n");
-  absl::StrAppend(output, "\"model_spec\":", model_spec_output, ",\n");
-  absl::StrAppend(output, "\"metadata\": {");
-  absl::StrAppend(output, "\"signature_def\": ", signature_def_output, "}\n");
-  absl::StrAppend(output, "}\n");
-  return Status::OK();
-}
+// Status HttpRestApiHandler::ProcessModelMetadataRequest(
+//     const absl::string_view model_name,
+//     const absl::string_view model_version_str, string* output) {
+//   GetModelMetadataRequest request;
+//   if (model_name.empty()) {
+//     return errors::InvalidArgument("Missing model name in request.");
+//   }
+//   request.mutable_model_spec()->set_name(string(model_name));
+//   // We currently only support the kSignatureDef metadata field
+//   request.add_metadata_field(GetModelMetadataImpl::kSignatureDef);
+//   if (!model_version_str.empty()) {
+//     int64 version;
+//     if (!absl::SimpleAtoi(model_version_str, &version)) {
+//       return errors::InvalidArgument(
+//           "Failed to convert version: ", model_version_str, " to numeric.");
+//     }
+//     request.mutable_model_spec()->mutable_version()->set_value(version);
+//   }
+// 
+//   GetModelMetadataResponse response;
+//   TF_RETURN_IF_ERROR(
+//       GetModelMetadataImpl::GetModelMetadata(core_, request, &response));
+//   JsonPrintOptions opts;
+//   opts.add_whitespace = true;
+//   opts.always_print_primitive_fields = true;
+//   // TODO(b/118381513): preserving proto field names on 'Any' fields has been
+//   // fixed in the master branch of OSS protobuf but the TF ecosystem is
+//   // currently using v3.6.0 where the fix is not present. To resolve the issue
+//   // we invoke MessageToJsonString on invididual fields and concatenate the
+//   // resulting strings and make it valid JSON that conforms with the response we
+//   // expect.
+//   opts.preserve_proto_field_names = true;
+// 
+//   string model_spec_output;
+//   const auto& status1 =
+//       MessageToJsonString(response.model_spec(), &model_spec_output, opts);
+//   if (!status1.ok()) {
+//     return errors::Internal(
+//         "Failed to convert model spec proto to json. Error: ",
+//         status1.ToString());
+//   }
+// 
+//   tensorflow::serving::SignatureDefMap signature_def_map;
+//   if (response.metadata().end() ==
+//       response.metadata().find(GetModelMetadataImpl::kSignatureDef)) {
+//     return errors::Internal(
+//         "Failed to find 'signature_def' key in the GetModelMetadataResponse "
+//         "metadata map.");
+//   }
+//   bool unpack_status = response.metadata()
+//                            .at(GetModelMetadataImpl::kSignatureDef)
+//                            .UnpackTo(&signature_def_map);
+//   if (!unpack_status) {
+//     return errors::Internal(
+//         "Failed to unpack 'Any' object to 'SignatureDefMap'.");
+//   }
+// 
+//   string signature_def_output;
+//   const auto& status2 =
+//       MessageToJsonString(signature_def_map, &signature_def_output, opts);
+//   if (!status2.ok()) {
+//     return errors::Internal(
+//         "Failed to convert signature def proto to json. Error: ",
+//         status2.ToString());
+//   }
+// 
+//   // Concatenate the resulting strings into a valid JSON format.
+//   absl::StrAppend(output, "{\n");
+//   absl::StrAppend(output, "\"model_spec\":", model_spec_output, ",\n");
+//   absl::StrAppend(output, "\"metadata\": {");
+//   absl::StrAppend(output, "\"signature_def\": ", signature_def_output, "}\n");
+//   absl::StrAppend(output, "}\n");
+//   return Status::OK();
+// }
 
 Status HttpRestApiHandler::GetInfoMap(
     const ModelSpec& model_spec, const string& signature_name,
     ::google::protobuf::Map<string, tensorflow::TensorInfo>* infomap) {
-  ServableHandle<SavedModelBundle> bundle;
-  TF_RETURN_IF_ERROR(core_->GetServableHandle(model_spec, &bundle));
-  const string& signame =
-      signature_name.empty() ? kDefaultServingSignatureDefKey : signature_name;
-  auto iter = bundle->meta_graph_def.signature_def().find(signame);
-  if (iter == bundle->meta_graph_def.signature_def().end()) {
-    return errors::InvalidArgument("Serving signature name: \"", signame,
-                                   "\" not found in signature def");
-  }
-  *infomap = iter->second.inputs();
+  tensorflow::TensorInfo indptr_info, indices_info, data_info, option_mask_info, ntree_limit_info;
+  indptr_info.set_dtype(DT_UINT64);
+  indices_info.set_dtype(DT_UINT32);
+  data_info.set_dtype(DT_FLOAT);
+  option_mask_info.set_dtype(DT_INT32);
+  ntree_limit_info.set_dtype(DT_UINT32);
+  (*infomap)["indptr"] = indptr_info;
+  (*infomap)["indices"] = indices_info;
+  (*infomap)["data"] = data_info;
+  (*infomap)["option_mask"] = option_mask_info;
+  (*infomap)["ntree_limit"] = ntree_limit_info;
   return Status::OK();
 }
 

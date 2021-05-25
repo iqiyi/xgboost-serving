@@ -23,9 +23,7 @@ limitations under the License.
 #include "tensorflow/core/framework/tensor.pb.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/protobuf/meta_graph.pb.h"
-#include "tensorflow_serving/apis/classification.pb.h"
 #include "tensorflow_serving/apis/predict.pb.h"
-#include "tensorflow_serving/apis/regression.pb.h"
 
 namespace tensorflow {
 namespace serving {
@@ -187,13 +185,13 @@ tensorflow::Status FillPredictRequestFromJson(
 // The "signature_name" is *optional* (if not specified, default serving
 // signature is used). "context" is also optional. "exampless" represents
 // list of examples. Any other keys in the top-level JSON object are ignored.
-tensorflow::Status FillClassificationRequestFromJson(
-    const absl::string_view json, ClassificationRequest* request);
+// tensorflow::Status FillClassificationRequestFromJson(
+//     const absl::string_view json, ClassificationRequest* request);
 
 // Same as FillClassificationRequestFromJson() but fills a RegressionRequest.
 // See comments above on how Example protos are expected to be formatted.
-tensorflow::Status FillRegressionRequestFromJson(const absl::string_view json,
-                                                 RegressionRequest* request);
+// tensorflow::Status FillRegressionRequestFromJson(const absl::string_view json,
+//                                                  RegressionRequest* request);
 
 // Make JSON object from TensorProtos.
 //
@@ -280,8 +278,8 @@ tensorflow::Status MakeJsonFromTensors(
 // is a string, and <score> is a float number. <label> can be missing from
 // the results of graph evaluation, and these would appear as empty strings
 // in above JSON.
-tensorflow::Status MakeJsonFromClassificationResult(
-    const ClassificationResult& result, string* json);
+// tensorflow::Status MakeJsonFromClassificationResult(
+//     const ClassificationResult& result, string* json);
 
 // Make JSON object from RegressionResult proto.
 //
@@ -294,8 +292,8 @@ tensorflow::Status MakeJsonFromClassificationResult(
 //
 // Note, all the results are keyed by "result" key in the JSON object.
 // <value> is a float number.
-tensorflow::Status MakeJsonFromRegressionResult(const RegressionResult& result,
-                                                string* json);
+//tensorflow::Status MakeJsonFromRegressionResult(const RegressionResult& result,
+//                                                string* json);
 
 }  // namespace serving
 }  // namespace tensorflow

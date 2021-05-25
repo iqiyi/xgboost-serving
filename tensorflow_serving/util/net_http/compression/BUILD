@@ -27,13 +27,13 @@ cc_library(
     ],
 )
 
-cc_test(
-    name = "gzip_zlib_test",
-    size = "large",
-    srcs = ["gzip_zlib_test.cc"],
-    features = ["-layering_check"],
-    deps = [
-        ":gzip_zlib",
-        "//tensorflow_serving/core/test_util:test_main",
-    ],
-)
+# cc_test(
+#     name = "gzip_zlib_test",
+#     size = "large",
+#     srcs = ["gzip_zlib_test.cc"],
+#     features = ["-layering_check"],
+#     deps = [
+#         ":gzip_zlib",
+#         "//tensorflow_serving/core/test_util:test_main",
+#     ],
+# )

@@ -33,7 +33,7 @@ cc_library(
         "//tensorflow_serving/core:servable_id",
         "//tensorflow_serving/core:source",
         "//tensorflow_serving/core:storage_path",
-        "@org_tensorflow//tensorflow/core:lib",
+        # "@org_tensorflow//tensorflow/core:lib",
     ],
 )
 
@@ -58,7 +58,7 @@ cc_test(
         "//tensorflow_serving/core/test_util:mock_storage_path_target",
         "//tensorflow_serving/core/test_util:test_main",
         "//tensorflow_serving/test_util",
-        "@org_tensorflow//tensorflow/core:lib",
+        # "@org_tensorflow//tensorflow/core:lib",
         "@org_tensorflow//tensorflow/core:test",
     ],
 )
@@ -77,7 +77,7 @@ cc_library(
             "//tensorflow_serving/core:storage_path",
             "@com_google_absl//absl/types:variant",
             "@org_tensorflow//tensorflow/core:lib",
-            "@org_tensorflow//tensorflow/core:tensorflow",
+            # "@org_tensorflow//tensorflow/core:tensorflow",
             "@org_tensorflow//tensorflow/core/kernels/batching_util:periodic_function_dynamic",
         ],
 )
@@ -109,7 +109,7 @@ cc_test(
         "//tensorflow_serving/core/test_util:mock_storage_path_target",
         "//tensorflow_serving/core/test_util:test_main",
         "//tensorflow_serving/test_util",
-        "@org_tensorflow//tensorflow/core:lib",
+        # "@org_tensorflow//tensorflow/core:lib",
         "@org_tensorflow//tensorflow/core:test",
     ],
 )

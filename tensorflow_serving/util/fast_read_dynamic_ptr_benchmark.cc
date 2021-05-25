@@ -40,7 +40,7 @@ limitations under the License.
 
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
-#include "tensorflow/core/kernels/batching_util/periodic_function.h"
+// #include "tensorflow/core/kernels/batching_util/periodic_function.h"
 #include "tensorflow/core/lib/core/notification.h"
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow/core/platform/env.h"
@@ -49,6 +49,7 @@ limitations under the License.
 #include "tensorflow/core/platform/test_benchmark.h"
 #include "tensorflow/core/platform/types.h"
 #include "tensorflow_serving/util/fast_read_dynamic_ptr.h"
+#include "tensorflow_serving/util/tensorflow/periodic_function.h"
 
 namespace tensorflow {
 namespace serving {

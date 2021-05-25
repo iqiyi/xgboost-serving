@@ -18,51 +18,39 @@ limitations under the License.
 
 #include "tensorflow_serving/apis/prediction_service.grpc.pb.h"
 #include "tensorflow_serving/model_servers/server_core.h"
-#include "tensorflow_serving/servables/tensorflow/predict_impl.h"
+#include "tensorflow_serving/servables/xgboost/predict_impl.h"
+#include "tensorflow_serving/servables/alphafm/predict_impl.h"
+#include "tensorflow_serving/servables/alphafm_softmax/predict_impl.h"
+
+#include <bvar/bvar.h>
 
 namespace tensorflow {
 namespace serving {
 
-class PredictionServiceImpl final : public PredictionService::Service {
- public:
-  // Options for configuring a PredictionServiceImpl object.
-  struct Options {
-    ServerCore* server_core;
-    bool use_saved_model;
-    bool enforce_session_run_timeout;
-  };
+class XgboostPredictionServiceImpl final : public PredictionService::Service {
+public:
+    explicit XgboostPredictionServiceImpl(ServerCore* server_core)
+        : core_(server_core),
+          predictor_(new XgboostPredictor()) {}
 
-  explicit PredictionServiceImpl(const Options& options)
-      : core_(options.server_core),
-        predictor_(new TensorflowPredictor(options.use_saved_model)),
-        use_saved_model_(options.use_saved_model),
-        enforce_session_run_timeout_(options.enforce_session_run_timeout) {}
+    ::grpc::Status Predict(::grpc::ServerContext* context,
+                           const PredictRequest* request,
+                           PredictResponse* response) override;
 
-  ::grpc::Status Predict(::grpc::ServerContext* context,
-                         const PredictRequest* request,
-                         PredictResponse* response) override;
+    ::grpc::Status PredictAlphafm(::grpc::ServerContext* context,
+		                  const PredictRequest* request,
+				  PredictResponse* response) override;
 
-  ::grpc::Status GetModelMetadata(::grpc::ServerContext* context,
-                                  const GetModelMetadataRequest* request,
-                                  GetModelMetadataResponse* response) override;
+    ::grpc::Status PredictAlphafmSoftmax(::grpc::ServerContext* context,
+                           const PredictRequest* request,
+                           PredictResponse* response) override;
 
-  ::grpc::Status Classify(::grpc::ServerContext* context,
-                          const ClassificationRequest* request,
-                          ClassificationResponse* response) override;
-
-  ::grpc::Status Regress(::grpc::ServerContext* context,
-                         const RegressionRequest* request,
-                         RegressionResponse* response) override;
-
-  ::grpc::Status MultiInference(::grpc::ServerContext* context,
-                                const MultiInferenceRequest* request,
-                                MultiInferenceResponse* response) override;
-
- private:
-  ServerCore* core_;
-  std::unique_ptr<TensorflowPredictor> predictor_;
-  const bool use_saved_model_;
-  const bool enforce_session_run_timeout_;
+private:
+    ServerCore* core_;
+    std::unique_ptr<XgboostPredictor> predictor_;
+    std::unique_ptr<AlphafmPredictor> alphafm_predictor_;
+    std::unique_ptr<AlphafmSoftmaxPredictor> alphafm_softmax_predictor_;
+    static bvar::LatencyRecorder latency_recorder;
 };
 
 }  // namespace serving

@@ -17,13 +17,14 @@ limitations under the License.
 
 #include "grpc/grpc.h"
 #include "tensorflow_serving/model_servers/grpc_status_util.h"
-#include "tensorflow_serving/servables/tensorflow/classification_service.h"
-#include "tensorflow_serving/servables/tensorflow/get_model_metadata_impl.h"
-#include "tensorflow_serving/servables/tensorflow/multi_inference_helper.h"
-#include "tensorflow_serving/servables/tensorflow/regression_service.h"
+
+#include <chrono>
+#include <thread>
 
 namespace tensorflow {
 namespace serving {
+
+bvar::LatencyRecorder XgboostPredictionServiceImpl::latency_recorder("xgboost_serving");
 
 namespace {
 
@@ -35,91 +36,46 @@ int DeadlineToTimeoutMillis(const gpr_timespec deadline) {
 
 }  // namespace
 
-::grpc::Status PredictionServiceImpl::Predict(::grpc::ServerContext *context,
-                                              const PredictRequest *request,
-                                              PredictResponse *response) {
-  tensorflow::RunOptions run_options = tensorflow::RunOptions();
-  if (enforce_session_run_timeout_) {
-    run_options.set_timeout_in_ms(
-        DeadlineToTimeoutMillis(context->raw_deadline()));
-  }
-
-  const ::grpc::Status status =
-      ToGRPCStatus(predictor_->Predict(run_options, core_, *request, response));
-
-  if (!status.ok()) {
-    VLOG(1) << "Predict failed: " << status.error_message();
-  }
-  return status;
+::grpc::Status XgboostPredictionServiceImpl::Predict(
+    ::grpc::ServerContext* context, const PredictRequest* request,
+    PredictResponse* response) {
+    auto start = std::chrono::system_clock::now();
+    const ::grpc::Status status = ToGRPCStatus(predictor_->Predict(core_, *request, response));
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    latency_recorder<<elapsed_seconds.count()*1000000;
+    if (!status.ok()) {
+        VLOG(1) << "Predict failed: " << status.error_message();
+    }
+    return status;
 }
 
-::grpc::Status PredictionServiceImpl::GetModelMetadata(
-    ::grpc::ServerContext *context, const GetModelMetadataRequest *request,
-    GetModelMetadataResponse *response) {
-  if (!use_saved_model_) {
-    return ToGRPCStatus(
-        errors::InvalidArgument("GetModelMetadata API is only available when "
-                                "use_saved_model is set to true"));
-  }
-  const ::grpc::Status status = ToGRPCStatus(
-      GetModelMetadataImpl::GetModelMetadata(core_, *request, response));
-  if (!status.ok()) {
-    VLOG(1) << "GetModelMetadata failed: " << status.error_message();
-  }
-  return status;
+::grpc::Status XgboostPredictionServiceImpl::PredictAlphafm(
+    ::grpc::ServerContext* context, const PredictRequest* request,
+    PredictResponse* response) {
+    auto start = std::chrono::system_clock::now();
+    const ::grpc::Status status = ToGRPCStatus(alphafm_predictor_->Predict(core_, *request, response));
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    latency_recorder<<elapsed_seconds.count()*1000000;
+    if (!status.ok()) {
+        VLOG(1) << "Predict failed: " << status.error_message();
+    }
+    return status;
 }
 
-::grpc::Status PredictionServiceImpl::Classify(
-    ::grpc::ServerContext *context, const ClassificationRequest *request,
-    ClassificationResponse *response) {
-  tensorflow::RunOptions run_options = tensorflow::RunOptions();
-  // By default, this is infinite which is the same default as RunOptions.
-  if (enforce_session_run_timeout_) {
-    run_options.set_timeout_in_ms(
-        DeadlineToTimeoutMillis(context->raw_deadline()));
-  }
-  const ::grpc::Status status =
-      ToGRPCStatus(TensorflowClassificationServiceImpl::Classify(
-          run_options, core_, *request, response));
-  if (!status.ok()) {
-    VLOG(1) << "Classify request failed: " << status.error_message();
-  }
-  return status;
-}
-
-::grpc::Status PredictionServiceImpl::Regress(::grpc::ServerContext *context,
-                                              const RegressionRequest *request,
-                                              RegressionResponse *response) {
-  tensorflow::RunOptions run_options = tensorflow::RunOptions();
-  // By default, this is infinite which is the same default as RunOptions.
-  if (enforce_session_run_timeout_) {
-    run_options.set_timeout_in_ms(
-        DeadlineToTimeoutMillis(context->raw_deadline()));
-  }
-  const ::grpc::Status status =
-      ToGRPCStatus(TensorflowRegressionServiceImpl::Regress(
-          run_options, core_, *request, response));
-  if (!status.ok()) {
-    VLOG(1) << "Regress request failed: " << status.error_message();
-  }
-  return status;
-}
-
-::grpc::Status PredictionServiceImpl::MultiInference(
-    ::grpc::ServerContext *context, const MultiInferenceRequest *request,
-    MultiInferenceResponse *response) {
-  tensorflow::RunOptions run_options = tensorflow::RunOptions();
-  // By default, this is infinite which is the same default as RunOptions.
-  if (enforce_session_run_timeout_) {
-    run_options.set_timeout_in_ms(
-        DeadlineToTimeoutMillis(context->raw_deadline()));
-  }
-  const ::grpc::Status status = ToGRPCStatus(
-      RunMultiInferenceWithServerCore(run_options, core_, *request, response));
-  if (!status.ok()) {
-    VLOG(1) << "MultiInference request failed: " << status.error_message();
-  }
-  return status;
+::grpc::Status XgboostPredictionServiceImpl::PredictAlphafmSoftmax(
+    ::grpc::ServerContext* context, const PredictRequest* request,
+    PredictResponse* response) {
+    auto start = std::chrono::system_clock::now();
+    const ::grpc::Status status = ToGRPCStatus(alphafm_softmax_predictor_->Predict(core_, *request, response));
+    auto end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    latency_recorder<<elapsed_seconds.count()*1000000;
+    if (!status.ok()) {
+        VLOG(1) << "Predict failed: " << status.error_message();
+    }
+    return status;
 }
 
 }  // namespace serving

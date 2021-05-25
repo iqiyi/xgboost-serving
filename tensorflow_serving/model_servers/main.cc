@@ -52,11 +52,16 @@ limitations under the License.
 #include "tensorflow/core/util/command_line_flags.h"
 #include "tensorflow_serving/model_servers/server.h"
 #include "tensorflow_serving/model_servers/version.h"
+#include "tensorflow_serving/model_servers/model_platform_types.h"
 
 int main(int argc, char** argv) {
   tensorflow::serving::main::Server::Options options;
   bool display_version = false;
+  std::string platform_name = tensorflow::serving::kTensorFlowModelPlatform;
   std::vector<tensorflow::Flag> flag_list = {
+      tensorflow::Flag("platform_name", &platform_name,
+		       "Platform to use for serving:"
+		       "tensorflow/xgboost"),
       tensorflow::Flag("port", &options.grpc_port,
                        "Port to listen on for gRPC API"),
       tensorflow::Flag("grpc_socket_path", &options.grpc_socket_path,
@@ -132,24 +137,6 @@ int main(int argc, char** argv) {
                        "consumption of the model server, at the potential cost "
                        "of cache misses if model files are accessed after "
                        "servables are loaded."),
-      tensorflow::Flag("tensorflow_session_parallelism",
-                       &options.tensorflow_session_parallelism,
-                       "Number of threads to use for running a "
-                       "Tensorflow session. Auto-configured by default."
-                       "Note that this option is ignored if "
-                       "--platform_config_file is non-empty."),
-      tensorflow::Flag("tensorflow_intra_op_parallelism",
-                       &options.tensorflow_intra_op_parallelism,
-                       "Number of threads to use to parallelize the execution"
-                       "of an individual op. Auto-configured by default."
-                       "Note that this option is ignored if "
-                       "--platform_config_file is non-empty."),
-      tensorflow::Flag("tensorflow_inter_op_parallelism",
-                       &options.tensorflow_inter_op_parallelism,
-                       "Controls the number of operators that can be executed "
-                       "simultaneously. Auto-configured by default."
-                       "Note that this option is ignored if "
-                       "--platform_config_file is non-empty."),
       tensorflow::Flag(
           "ssl_config_file", &options.ssl_config_file,
           "If non-empty, read an ascii SSLConfig protobuf from "
@@ -159,16 +146,6 @@ int main(int argc, char** argv) {
                        "from the supplied file name, and use that platform "
                        "config instead of the Tensorflow platform. (If used, "
                        "--enable_batching is ignored.)"),
-      tensorflow::Flag(
-          "per_process_gpu_memory_fraction",
-          &options.per_process_gpu_memory_fraction,
-          "Fraction that each process occupies of the GPU memory space "
-          "the value is between 0.0 and 1.0 (with 0.0 as the default) "
-          "If 1.0, the server will allocate all the memory when the server "
-          "starts, If 0.0, Tensorflow will automatically select a value."),
-      tensorflow::Flag("saved_model_tags", &options.saved_model_tags,
-                       "Comma-separated set of tags corresponding to the meta "
-                       "graph def to load from SavedModel."),
       tensorflow::Flag("grpc_channel_arguments",
                        &options.grpc_channel_arguments,
                        "A comma separated list of arguments to be passed to "
@@ -179,6 +156,7 @@ int main(int argc, char** argv) {
                        "initializations (such as TF optimizations) at load "
                        "time, to reduce first request latency."),
       tensorflow::Flag("version", &display_version, "Display version"),
+      tensorflow::Flag("brpc_port", &options.brpc_port, "Port to listen on for the BRPC dummy server"),
       tensorflow::Flag(
           "monitoring_config_file", &options.monitoring_config_file,
           "If non-empty, read an ascii MonitoringConfig protobuf from "
@@ -187,12 +165,7 @@ int main(int argc, char** argv) {
           "remove_unused_fields_from_bundle_metagraph",
           &options.remove_unused_fields_from_bundle_metagraph,
           "Removes unused fields from MetaGraphDef proto message to save "
-          "memory."),
-      tensorflow::Flag("use_tflite_model", &options.use_tflite_model,
-                       "EXPERIMENTAL; CAN BE REMOVED ANYTIME! Load and use "
-                       "TensorFlow Lite model from `model.tflite` file in "
-                       "SavedModel directory instead of the TensorFlow model "
-                       "from `saved_model.pb` file.")};
+          "memory.")};
 
   const auto& usage = tensorflow::Flags::Usage(argv[0], flag_list);
   if (!tensorflow::Flags::Parse(&argc, argv, flag_list)) {
@@ -201,8 +174,7 @@ int main(int argc, char** argv) {
   }
 
   if (display_version) {
-    std::cout << "TensorFlow ModelServer: " << TF_Serving_Version() << "\n"
-              << "TensorFlow Library: " << TF_Version() << "\n";
+    std::cout << "XGBoostFM ModelServer: " << TF_Serving_Version() << "\n";
     return 0;
   }
 
@@ -212,9 +184,14 @@ int main(int argc, char** argv) {
   }
 
   tensorflow::serving::main::Server server;
-  const auto& status = server.BuildAndStart(options);
-  if (!status.ok()) {
-    std::cout << "Failed to start server. Error: " << status << "\n";
+  if(tensorflow::serving::kXGBoostModelPlatform == platform_name) {
+    const auto& status = server.BuildAndStartXGBoost(options);
+    if (!status.ok()) {
+      std::cout << "Failed to start server. Error: " << status << "\n";
+      return -1;
+    }
+  } else {
+    std::cout << "Unrecognized platform name" << "\n";
     return -1;
   }
   server.WaitForTermination();

@@ -17,9 +17,10 @@ limitations under the License.
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "tensorflow/core/kernels/batching_util/fake_clock_env.h"
+// #include "tensorflow/core/kernels/batching_util/fake_clock_env.h"
 #include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/platform/logging.h"
+#include "tensorflow_serving/util/tensorflow/fake_clock_env.h"
 
 namespace tensorflow {
 namespace serving {

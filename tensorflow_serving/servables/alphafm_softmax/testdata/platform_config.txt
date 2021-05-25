@@ -1,0 +1,10 @@
+platform_configs {
+  key: "alphafm_softmax"
+  value {
+    source_adapter_config {
+      [type.googleapis.com/tensorflow.serving.AlphafmSoftmaxSourceAdapterConfig] {
+      }
+    }
+  }
+}
+

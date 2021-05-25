@@ -26,6 +26,9 @@ limitations under the License.
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/protobuf/config.pb.h"
 #include "tensorflow/core/protobuf/meta_graph.pb.h"
+#include "tensorflow_serving/servables/xgboost/predict_impl.h"
+
+#include <bvar/bvar.h>
 
 namespace tensorflow {
 
@@ -35,6 +38,7 @@ namespace serving {
 
 class ServerCore;
 class TensorflowPredictor;
+class XgboostPredictor;
 class ModelSpec;
 
 // HttpRestApiHandler handles HTTP/REST APIs of TF serving.
@@ -85,14 +89,6 @@ class HttpRestApiHandler {
                         string* output);
 
  private:
-  Status ProcessClassifyRequest(const absl::string_view model_name,
-                                const absl::optional<int64>& model_version,
-                                const absl::string_view request_body,
-                                string* output);
-  Status ProcessRegressRequest(const absl::string_view model_name,
-                               const absl::optional<int64>& model_version,
-                               const absl::string_view request_body,
-                               string* output);
   Status ProcessPredictRequest(const absl::string_view model_name,
                                const absl::optional<int64>& model_version,
                                const absl::string_view request_body,
@@ -100,15 +96,16 @@ class HttpRestApiHandler {
   Status ProcessModelStatusRequest(const absl::string_view model_name,
                                    const absl::string_view model_version_str,
                                    string* output);
-  Status ProcessModelMetadataRequest(const absl::string_view model_name,
-                                     const absl::string_view model_version_str,
-                                     string* output);
+  // Status ProcessModelMetadataRequest(const absl::string_view model_name,
+  //                                    const absl::string_view model_version_str,
+  //                                    string* output);
   Status GetInfoMap(const ModelSpec& model_spec, const string& signature_name,
                     ::google::protobuf::Map<string, tensorflow::TensorInfo>* infomap);
 
   const RunOptions run_options_;
   ServerCore* core_;
-  std::unique_ptr<TensorflowPredictor> predictor_;
+  std::unique_ptr<XgboostPredictor> predictor_;
+  static bvar::LatencyRecorder http_latency_recorder;
   const RE2 prediction_api_regex_;
   const RE2 modelstatus_api_regex_;
 };

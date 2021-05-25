@@ -77,9 +77,6 @@ function main() {
   echo $(date) : "=== Building wheel (CPU)"
   python setup.py bdist_wheel --universal \
     --project_name tensorflow-serving-api # >/dev/null
-  echo $(date) : "=== Building wheel (GPU)"
-  python setup.py bdist_wheel --universal \
-    --project_name tensorflow-serving-api-gpu # >/dev/null
   mkdir -p "${DEST}"
   cp dist/* "${DEST}"
   popd

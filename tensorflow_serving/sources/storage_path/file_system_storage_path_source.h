@@ -78,17 +78,17 @@ class FileSystemStoragePathSource : public Source<StoragePath> {
     return config_;
   }
 
- private:
-  friend class internal::FileSystemStoragePathSourceTestAccess;
-
-  FileSystemStoragePathSource() = default;
-
   // Polls the file system and identify numerical children of the base path.
   // If zero such children are found, invokes 'aspired_versions_callback_' with
   // an empty versions list. If one or more such children are found, invokes
   // 'aspired_versions_callback_' with a singleton list containing the largest
   // such child.
   Status PollFileSystemAndInvokeCallback();
+
+ private:
+  friend class internal::FileSystemStoragePathSourceTestAccess;
+
+  FileSystemStoragePathSource() = default;
 
   // Sends empty aspired-versions lists for each servable in 'servable_names'.
   Status UnaspireServables(const std::set<string>& servable_names)

@@ -26,7 +26,6 @@ message ModelSpec {
     // Use the version associated with the given label.
     string version_label = 4;
   }
-
   // A named signature to evaluate. If unspecified, the default signature will
   // be used.
   string signature_name = 3;

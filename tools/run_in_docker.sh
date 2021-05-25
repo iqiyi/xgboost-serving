@@ -28,7 +28,7 @@
 # Typical usage (to build from lastest upstream source):
 # $ git clone https://github.com/tensorflow/serving.git
 # $ cd serving
-# $ ./run_in_docker.sh bazel build tensorflow_serving/model_servers:tensorflow_model_server
+# $ ./tools/run_in_docker.sh bazel build tensorflow_serving/model_servers:tensorflow_model_server
 #
 # Running a python script:
 # $ cd tensorflow_serving/example
@@ -60,16 +60,20 @@ function get_switch_user_cmd() {
 }
 
 function get_bazel_cmd() {
-  echo "cd $(pwd); TEST_TMPDIR=.cache"
+  echo "cd $(pwd); TEST_TMPDIR=/tmp/.cache"
 }
 
 function get_python_cmd() {
   echo "cd $(pwd);"
 }
 
+function get_common_cmd() {
+  echo "cd $(pwd);"
+}
+
 (( $# < 1 )) && usage
 
-IMAGE="tensorflow/serving:nightly-devel"
+IMAGE="hzy001/xgboost-serving:latest-devel"
 RUN_OPTS=()
 while [[ $# > 1 ]]; do
   case "$1" in
@@ -92,7 +96,7 @@ if [[ "$1" = "bazel"* ]]; then
 elif [[ "$1" == "python"* ]]; then
   CMD="sh -c '$(get_python_cmd) $@'"
 else
-  CMD="$@"
+	CMD="sh -c '$(get_common_cmd) $@'"
 fi
 
 [[ "${CMD}" = "" ]] && usage

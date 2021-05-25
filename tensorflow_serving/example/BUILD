@@ -19,9 +19,37 @@ filegroup(
 )
 
 cc_binary(
-    name = "resnet_client_cc",
+    name = "xgboost_client_cc",
     srcs = [
-        "resnet_client.cc",
+        "xgboost_client.cc",
+    ],
+    deps = [
+        "//tensorflow_serving/apis:prediction_service_proto",
+        "@com_google_protobuf//:protobuf_lite",
+        "@grpc//:grpc++",
+        "@org_tensorflow//tensorflow/core:framework",
+        "@org_tensorflow//tensorflow/core:lib",
+    ],
+)
+
+cc_binary(
+    name = "alphafm_client_cc",
+    srcs = [
+        "alphafm_client.cc",
+    ],
+    deps = [
+        "//tensorflow_serving/apis:prediction_service_proto",
+        "@com_google_protobuf//:protobuf_lite",
+        "@grpc//:grpc++",
+        "@org_tensorflow//tensorflow/core:framework",
+        "@org_tensorflow//tensorflow/core:lib",
+    ],
+)
+
+cc_binary(
+    name = "alphafm_softmax_client_cc",
+    srcs = [
+        "alphafm_softmax_client.cc",
     ],
     deps = [
         "//tensorflow_serving/apis:prediction_service_proto",

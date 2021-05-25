@@ -6,6 +6,7 @@ node_modules
 /bazel-serving
 /bazel-tensorflow
 /bazel-tensorflow_serving
+/bazel-xgboost-serving
 /bazel-testlogs
 /bazel-tf
 /bazel-workspace

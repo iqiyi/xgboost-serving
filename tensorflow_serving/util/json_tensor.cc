@@ -38,7 +38,6 @@ limitations under the License.
 #include "tensorflow/core/framework/types.pb.h"
 #include "tensorflow/core/lib/core/errors.h"
 #include "tensorflow/core/lib/core/stringpiece.h"
-#include "tensorflow_serving/apis/input.pb.h"
 #include "tensorflow_serving/apis/model.pb.h"
 
 namespace tensorflow {
@@ -636,59 +635,59 @@ Status FillTensorMapFromInputsMap(
 
 }  // namespace
 
-Status FillPredictRequestFromJson(
-    const absl::string_view json,
-    const std::function<tensorflow::Status(
-        const string&, ::google::protobuf::Map<string, tensorflow::TensorInfo>*)>&
-        get_tensorinfo_map,
-    PredictRequest* request, JsonPredictRequestFormat* format) {
-  rapidjson::Document doc;
-  *format = JsonPredictRequestFormat::kInvalid;
-  TF_RETURN_IF_ERROR(ParseJson(json, &doc));
-  TF_RETURN_IF_ERROR(FillSignature(doc, request));
-
-  ::google::protobuf::Map<string, tensorflow::TensorInfo> tensorinfo_map;
-  const string& signame = request->model_spec().signature_name();
-  TF_RETURN_IF_ERROR(get_tensorinfo_map(signame, &tensorinfo_map));
-  if (tensorinfo_map.empty()) {
-    return errors::InvalidArgument("Failed to get input map for signature: ",
-                                   signame.empty() ? "DEFAULT" : signame);
-  }
-
-  //
-  // Fill in tensors from either "instances" or "inputs" key.
-  //
-  auto itr_instances = doc.FindMember(kPredictRequestInstancesKey);
-  auto itr_inputs = doc.FindMember(kPredictRequestInputsKey);
-  if (itr_instances != doc.MemberEnd()) {
-    if (itr_inputs != doc.MemberEnd()) {
-      return FormatError(doc, "Not formatted correctly expecting only",
-        " one of '", kPredictRequestInputsKey, "' or '",
-        kPredictRequestInstancesKey, "' keys to exist ");
-    }
-    if (!itr_instances->value.IsArray()) {
-      return FormatError(doc, "Excepting '",
-        kPredictRequestInstancesKey, "' to be an list/array");
-    }
-    if (!itr_instances->value.Capacity()) {
-      return FormatError(doc, "No values in '",
-        kPredictRequestInstancesKey, "' array");
-    }
-    *format = JsonPredictRequestFormat::kRow;
-    return FillTensorMapFromInstancesList(itr_instances, tensorinfo_map,
-                                          request->mutable_inputs());
-  } else if (itr_inputs != doc.MemberEnd()) {
-    if (itr_instances != doc.MemberEnd()) {
-      return FormatError(doc, "Not formatted correctly expecting only",
-        " one of '", kPredictRequestInputsKey, "' or '",
-        kPredictRequestInstancesKey, "' keys to exist ");
-    }
-    *format = JsonPredictRequestFormat::kColumnar;
-    return FillTensorMapFromInputsMap(itr_inputs, tensorinfo_map,
-                                      request->mutable_inputs());
-  }
-  return errors::InvalidArgument("Missing 'inputs' or 'instances' key");
-}
+// Status FillPredictRequestFromJson(
+//     const absl::string_view json,
+//     const std::function<tensorflow::Status(
+//         const string&, ::google::protobuf::Map<string, tensorflow::TensorInfo>*)>&
+//         get_tensorinfo_map,
+//     PredictRequest* request, JsonPredictRequestFormat* format) {
+//   rapidjson::Document doc;
+//   *format = JsonPredictRequestFormat::kInvalid;
+//   TF_RETURN_IF_ERROR(ParseJson(json, &doc));
+//   TF_RETURN_IF_ERROR(FillSignature(doc, request));
+// 
+//   ::google::protobuf::Map<string, tensorflow::TensorInfo> tensorinfo_map;
+//   const string& signame = request->model_spec().signature_name();
+//   TF_RETURN_IF_ERROR(get_tensorinfo_map(signame, &tensorinfo_map));
+//   if (tensorinfo_map.empty()) {
+//     return errors::InvalidArgument("Failed to get input map for signature: ",
+//                                    signame.empty() ? "DEFAULT" : signame);
+//   }
+// 
+//   //
+//   // Fill in tensors from either "instances" or "inputs" key.
+//   //
+//   auto itr_instances = doc.FindMember(kPredictRequestInstancesKey);
+//   auto itr_inputs = doc.FindMember(kPredictRequestInputsKey);
+//   if (itr_instances != doc.MemberEnd()) {
+//     if (itr_inputs != doc.MemberEnd()) {
+//       return FormatError(doc, "Not formatted correctly expecting only",
+//         " one of '", kPredictRequestInputsKey, "' or '",
+//         kPredictRequestInstancesKey, "' keys to exist ");
+//     }
+//     if (!itr_instances->value.IsArray()) {
+//       return FormatError(doc, "Excepting '",
+//         kPredictRequestInstancesKey, "' to be an list/array");
+//     }
+//     if (!itr_instances->value.Capacity()) {
+//       return FormatError(doc, "No values in '",
+//         kPredictRequestInstancesKey, "' array");
+//     }
+//     *format = JsonPredictRequestFormat::kRow;
+//     return FillTensorMapFromInstancesList(itr_instances, tensorinfo_map,
+//                                           request->mutable_inputs());
+//   } else if (itr_inputs != doc.MemberEnd()) {
+//     if (itr_instances != doc.MemberEnd()) {
+//       return FormatError(doc, "Not formatted correctly expecting only",
+//         " one of '", kPredictRequestInputsKey, "' or '",
+//         kPredictRequestInstancesKey, "' keys to exist ");
+//     }
+//     *format = JsonPredictRequestFormat::kColumnar;
+//     return FillTensorMapFromInputsMap(itr_inputs, tensorinfo_map,
+//                                       request->mutable_inputs());
+//   }
+//   return errors::InvalidArgument("Missing 'inputs' or 'instances' key");
+// }
 
 namespace {
 
@@ -850,15 +849,15 @@ Status FillClassifyRegressRequestFromJson(const absl::string_view json,
 
 }  // namespace
 
-Status FillClassificationRequestFromJson(const absl::string_view json,
-                                         ClassificationRequest* request) {
-  return FillClassifyRegressRequestFromJson(json, request);
-}
+// Status FillClassificationRequestFromJson(const absl::string_view json,
+//                                          ClassificationRequest* request) {
+//   return FillClassifyRegressRequestFromJson(json, request);
+// }
 
-Status FillRegressionRequestFromJson(const absl::string_view json,
-                                     RegressionRequest* request) {
-  return FillClassifyRegressRequestFromJson(json, request);
-}
+// Status FillRegressionRequestFromJson(const absl::string_view json,
+//                                      RegressionRequest* request) {
+//   return FillClassifyRegressRequestFromJson(json, request);
+// }
 
 namespace {
 
@@ -1058,66 +1057,66 @@ Status MakeJsonFromTensors(const ::google::protobuf::Map<string, TensorProto>& t
   }
 }
 
-Status MakeJsonFromClassificationResult(const ClassificationResult& result,
-                                        string* json) {
-  if (result.classifications_size() == 0) {
-    return errors::InvalidArgument(
-        "Cannot convert empty ClassificationResults to JSON");
-  }
+// Status MakeJsonFromClassificationResult(const ClassificationResult& result,
+//                                         string* json) {
+//   if (result.classifications_size() == 0) {
+//     return errors::InvalidArgument(
+//         "Cannot convert empty ClassificationResults to JSON");
+//   }
+// 
+//   rapidjson::StringBuffer buffer;
+//   rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+//   writer.StartObject();
+//   writer.Key(kClassifyRegressResponseKey);
+//   writer.StartArray();
+//   for (const auto& classifications : result.classifications()) {
+//     writer.SetFormatOptions(rapidjson::kFormatSingleLineArray);
+//     writer.StartArray();
+//     for (const auto& elem : classifications.classes()) {
+//       writer.StartArray();
+//       if (!writer.String(elem.label().c_str(), elem.label().size())) {
+//         return errors::Internal("Failed to write class label: ", elem.label(),
+//                                 " to output JSON buffer");
+//       }
+//       if (!WriteDecimal(&writer, elem.score())) {
+//         return errors::Internal("Failed to write class score : ", elem.score(),
+//                                 " to output JSON buffer");
+//       }
+//       writer.EndArray();
+//     }
+//     writer.EndArray();
+//     writer.SetFormatOptions(rapidjson::kFormatDefault);
+//   }
+//   writer.EndArray();
+//   writer.EndObject();
+//   json->assign(buffer.GetString());
+//   return Status::OK();
+// }
 
-  rapidjson::StringBuffer buffer;
-  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-  writer.StartObject();
-  writer.Key(kClassifyRegressResponseKey);
-  writer.StartArray();
-  for (const auto& classifications : result.classifications()) {
-    writer.SetFormatOptions(rapidjson::kFormatSingleLineArray);
-    writer.StartArray();
-    for (const auto& elem : classifications.classes()) {
-      writer.StartArray();
-      if (!writer.String(elem.label().c_str(), elem.label().size())) {
-        return errors::Internal("Failed to write class label: ", elem.label(),
-                                " to output JSON buffer");
-      }
-      if (!WriteDecimal(&writer, elem.score())) {
-        return errors::Internal("Failed to write class score : ", elem.score(),
-                                " to output JSON buffer");
-      }
-      writer.EndArray();
-    }
-    writer.EndArray();
-    writer.SetFormatOptions(rapidjson::kFormatDefault);
-  }
-  writer.EndArray();
-  writer.EndObject();
-  json->assign(buffer.GetString());
-  return Status::OK();
-}
-
-Status MakeJsonFromRegressionResult(const RegressionResult& result,
-                                    string* json) {
-  if (result.regressions_size() == 0) {
-    return errors::InvalidArgument(
-        "Cannot convert empty RegressionResults to JSON");
-  }
-
-  rapidjson::StringBuffer buffer;
-  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-  writer.StartObject();
-  writer.Key(kClassifyRegressResponseKey);
-  writer.SetFormatOptions(rapidjson::kFormatSingleLineArray);
-  writer.StartArray();
-  for (const auto& regression : result.regressions()) {
-    if (!WriteDecimal(&writer, regression.value())) {
-      return errors::Internal("Failed to write regression value : ",
-                              regression.value(), " to output JSON buffer");
-    }
-  }
-  writer.EndArray();
-  writer.EndObject();
-  json->assign(buffer.GetString());
-  return Status::OK();
-}
+// Status MakeJsonFromRegressionResult(const RegressionResult& result,
+//                                     string* json) {
+//   if (result.regressions_size() == 0) {
+//     return errors::InvalidArgument(
+//         "Cannot convert empty RegressionResults to JSON");
+//   }
+// 
+//   rapidjson::StringBuffer buffer;
+//   rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+//   writer.StartObject();
+//   writer.Key(kClassifyRegressResponseKey);
+//   writer.SetFormatOptions(rapidjson::kFormatSingleLineArray);
+//   writer.StartArray();
+//   for (const auto& regression : result.regressions()) {
+//     if (!WriteDecimal(&writer, regression.value())) {
+//       return errors::Internal("Failed to write regression value : ",
+//                               regression.value(), " to output JSON buffer");
+//     }
+//   }
+//   writer.EndArray();
+//   writer.EndObject();
+//   json->assign(buffer.GetString());
+//   return Status::OK();
+// }
 
 }  // namespace serving
 }  // namespace tensorflow

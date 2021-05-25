@@ -32,7 +32,7 @@ cc_library(
         "//tensorflow_serving/core:source_adapter",
         "//tensorflow_serving/core:storage_path",
         "@org_tensorflow//tensorflow/core:lib",
-        "@org_tensorflow//tensorflow/core:tensorflow",
+        # "@org_tensorflow//tensorflow/core:tensorflow",
     ],
 )
 

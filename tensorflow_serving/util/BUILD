@@ -95,8 +95,9 @@ cc_test(
     deps = [
         ":observer",
         "//tensorflow_serving/core/test_util:test_main",
+        "//tensorflow_serving/util/tensorflow:periodic_function_dynamic",
         "@org_tensorflow//tensorflow/core:lib",
-        "@org_tensorflow//tensorflow/core/kernels/batching_util:periodic_function",
+        # "@org_tensorflow//tensorflow/core/kernels/batching_util:periodic_function",
     ],
 )
 
@@ -120,7 +121,7 @@ cc_test(
     deps = [
         ":event_bus",
         "//tensorflow_serving/core/test_util:test_main",
-        "@org_tensorflow//tensorflow/core/kernels/batching_util:fake_clock_env",
+        "//tensorflow_serving/util/tensorflow:fake_clock_env",
     ],
 )
 
@@ -140,7 +141,7 @@ cc_test(
         ":fast_read_dynamic_ptr",
         "//tensorflow_serving/core/test_util:test_main",
         "@org_tensorflow//tensorflow/core:lib",
-        "@org_tensorflow//tensorflow/core:tensorflow",
+        # "@org_tensorflow//tensorflow/core:tensorflow",
     ],
 )
 
@@ -151,9 +152,10 @@ cc_test(
         ":fast_read_dynamic_ptr",
         "@com_google_absl//absl/time",
         "@org_tensorflow//tensorflow/core:lib",
-        "@org_tensorflow//tensorflow/core:tensorflow",
+        # "@org_tensorflow//tensorflow/core:tensorflow",
         "@org_tensorflow//tensorflow/core:test",
-        "@org_tensorflow//tensorflow/core/kernels/batching_util:periodic_function_dynamic",
+        # "@org_tensorflow//tensorflow/core/kernels/batching_util:periodic_function_dynamic",
+        "//tensorflow_serving/util/tensorflow:periodic_function_dynamic",
     ],
 )
 
@@ -342,11 +344,8 @@ cc_library(
     srcs = ["json_tensor.cc"],
     hdrs = ["json_tensor.h"],
     deps = [
-        "//tensorflow_serving/apis:classification_proto",
-        "//tensorflow_serving/apis:input_proto",
         "//tensorflow_serving/apis:model_proto",
         "//tensorflow_serving/apis:predict_proto",
-        "//tensorflow_serving/apis:regression_proto",
         "@com_github_tencent_rapidjson//:rapidjson",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -365,24 +364,22 @@ cc_test(
     ],
 )
 
-cc_test(
-    name = "json_tensor_test",
-    srcs = ["json_tensor_test.cc"],
-    deps = [
-        ":json_tensor",
-        "//tensorflow_serving/apis:classification_proto",
-        "//tensorflow_serving/apis:model_proto",
-        "//tensorflow_serving/apis:predict_proto",
-        "//tensorflow_serving/apis:regression_proto",
-        "//tensorflow_serving/core/test_util:test_main",
-        "//tensorflow_serving/test_util",
-        "@com_google_protobuf//:protobuf",
-        "@org_tensorflow//tensorflow/core:framework",
-        "@org_tensorflow//tensorflow/core:lib",
-        "@org_tensorflow//tensorflow/core:protos_all_cc",
-        "@org_tensorflow//tensorflow/core:test",
-    ],
-)
+# cc_test(
+#     name = "json_tensor_test",
+#     srcs = ["json_tensor_test.cc"],
+#     deps = [
+#         ":json_tensor",
+#         "//tensorflow_serving/apis:model_proto",
+#         "//tensorflow_serving/apis:predict_proto",
+#         "//tensorflow_serving/core/test_util:test_main",
+#         "//tensorflow_serving/test_util",
+#         "@com_google_protobuf//:protobuf",
+#         "@org_tensorflow//tensorflow/core:framework",
+#         "@org_tensorflow//tensorflow/core:lib",
+#         "@org_tensorflow//tensorflow/core:protos_all_cc",
+#         "@org_tensorflow//tensorflow/core:test",
+#     ],
+# )
 
 serving_proto_library(
     name = "class_registration_test_proto",

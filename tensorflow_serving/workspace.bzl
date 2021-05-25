@@ -4,6 +4,7 @@
 load("@org_tensorflow//third_party:repo.bzl", "tf_http_archive")
 load("@org_tensorflow//tensorflow:workspace.bzl", "tf_workspace")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 def tf_serving_workspace():
     """All TensorFlow Serving external dependencies."""
@@ -57,16 +58,35 @@ def tf_serving_workspace():
         ],
     )
 
-    # ===== TF.Text dependencies
-    # NOTE: Before updating this version, you must manually run the tests found in:
-    # https://github.com/tensorflow/text/blob/master/oss_scripts/model_server/tests.txt
+    # ==== XGBoost dependencies ====
     http_archive(
-        name = "org_tensorflow_text",
-        sha256 = "2d6e1be79989d5b03da75a34d9e1331a70221d17dd754e80a7bca6e8daa8ae59",
-        strip_prefix = "text-a2f2ad05638c37161d2f06bdbf6eb5e0858b00e6",
+        name = "xgboost",
         urls = [
-            "https://github.com/tensorflow/text/archive/a2f2ad05638c37161d2f06bdbf6eb5e0858b00e6.zip",
+            "https://github.com/dmlc/xgboost/releases/download/v1.4.1/xgboost.tar.gz",
         ],
-        patches = ["@//third_party/tf_text:tftext.patch"],
-        patch_args = ["-p1"],
+        sha256 = "f3a37e5ddac10786e46423db874b29af413eed49fd9baed85035bbfee6fc6635",
+        build_file = "@//third_party/xgboost:BUILD",
+        strip_prefix = "xgboost",
+    )
+    # ==== brpc dependencies ====
+    http_archive(
+        name = "com_github_google_leveldb",
+        build_file = "@//third_party/leveldb:BUILD",
+        strip_prefix = "leveldb-a53934a3ae1244679f812d998a4f16f2c7f309a6",
+        url = "https://github.com/google/leveldb/archive/a53934a3ae1244679f812d998a4f16f2c7f309a6.tar.gz"
+    )
+    git_repository(
+        name = "brpc",
+        remote = "https://github.com/apache/incubator-brpc",
+        tag = "0.9.7",
+    )
+    git_repository(
+        name = "com_github_gflags_gflags",
+        remote = "https://github.com/gflags/gflags",
+        tag = "v2.2.2",
+    )
+    git_repository(
+        name = "com_github_glog_glog",
+        remote = "https://github.com/google/glog",
+        tag = "v0.4.0",
     )

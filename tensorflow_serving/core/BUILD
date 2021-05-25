@@ -28,7 +28,6 @@ cc_library(
     ],
     deps = [
         "//tensorflow_serving/util:hash",
-        "@org_tensorflow//tensorflow/core:lib",
     ],
 )
 
@@ -49,7 +48,7 @@ cc_library(
     ],
     deps = [
         ":servable_id",
-        "@org_tensorflow//tensorflow/core:lib",
+        # "@org_tensorflow//tensorflow/core:lib",
     ],
 )
 
@@ -74,7 +73,6 @@ cc_library(
         ":source",
         "//tensorflow_serving/resources:resources_proto",
         "//tensorflow_serving/util:any_ptr",
-        "@org_tensorflow//tensorflow/core:lib",
     ],
 )
 
@@ -91,7 +89,6 @@ cc_library(
         "//tensorflow_serving/resources:resource_values",
         "//tensorflow_serving/util:any_ptr",
         "//tensorflow_serving/util:optional",
-        "@org_tensorflow//tensorflow/core:lib",
     ],
 )
 
@@ -119,7 +116,7 @@ cc_library(
     ],
     deps = [
         ":servable_data",
-        "@org_tensorflow//tensorflow/core:lib",
+        # "@org_tensorflow//tensorflow/core:lib",
     ],
 )
 
@@ -233,7 +230,7 @@ cc_library(
     deps = [
         ":source_router",
         "@org_tensorflow//tensorflow/core:lib",
-        "@org_tensorflow//tensorflow/core:tensorflow",
+        # "@org_tensorflow//tensorflow/core:tensorflow",
     ],
 )
 
@@ -402,7 +399,7 @@ cc_test(
     deps = [
         ":servable_state_monitor",
         "//tensorflow_serving/core/test_util:test_main",
-        "@org_tensorflow//tensorflow/core/kernels/batching_util:fake_clock_env",
+        "//tensorflow_serving/util/tensorflow:fake_clock_env",
     ],
 )
 
@@ -430,7 +427,7 @@ cc_test(
         "//tensorflow_serving/util:any_ptr",
         "@org_tensorflow//tensorflow/core:lib",
         "@org_tensorflow//tensorflow/core:protos_all_cc",
-        "@org_tensorflow//tensorflow/core:tensorflow",
+        # "@org_tensorflow//tensorflow/core:tensorflow",
         "@org_tensorflow//tensorflow/core:test",
     ],
 )
@@ -503,7 +500,8 @@ cc_library(
         "//tensorflow_serving/util:observer",
         "//tensorflow_serving/util:optional",
         "@org_tensorflow//tensorflow/core:lib",
-        "@org_tensorflow//tensorflow/core/kernels/batching_util:periodic_function_dynamic",
+        # "@org_tensorflow//tensorflow/core/kernels/batching_util:periodic_function_dynamic",
+        "//tensorflow_serving/util/tensorflow:periodic_function_dynamic",
     ],
 )
 
@@ -542,7 +540,7 @@ cc_test(
         ":simple_loader",
         "//tensorflow_serving/core/test_util:manager_test_util",
         "@org_tensorflow//tensorflow/core:lib",
-        "@org_tensorflow//tensorflow/core:tensorflow",
+        # "@org_tensorflow//tensorflow/core:tensorflow",
         "@org_tensorflow//tensorflow/core:test",
     ],
 )
@@ -705,7 +703,6 @@ cc_library(
         ":servable_state_monitor",
         ":source",
         ":target",
-        "@org_tensorflow//tensorflow/core:lib",
     ],
 )
 

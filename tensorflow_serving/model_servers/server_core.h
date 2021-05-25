@@ -40,7 +40,6 @@ limitations under the License.
 #include "tensorflow_serving/core/source.h"
 #include "tensorflow_serving/core/source_adapter.h"
 #include "tensorflow_serving/core/storage_path.h"
-#include "tensorflow_serving/servables/tensorflow/predict_util.h"
 #include "tensorflow_serving/sources/storage_path/file_system_storage_path_source.h"
 #include "tensorflow_serving/util/event_bus.h"
 #include "tensorflow_serving/util/optional.h"
@@ -99,7 +98,7 @@ class ServerCore : public Manager {
 
     // The number of threads used to load models. If set to 0, then no thread
     // pool is used and loads are performed serially in the manager thread.
-    int32 num_load_threads = 0;
+    int32 num_load_threads = 1;
 
     // The number of load threads used to load the initial set of models at
     // server startup. This is set high to load up the initial set of models
@@ -108,7 +107,7 @@ class ServerCore : public Manager {
 
     // The number of threads used to unload models. If set to 0, then no thread
     // pool is used and unloads are performed serially in the manager thread.
-    int32 num_unload_threads = 0;
+    int32 num_unload_threads = 1;
 
     // Total model size limit, in terms of main memory, in bytes.
     uint64 total_model_memory_limit_bytes = std::numeric_limits<uint64>::max();
@@ -179,13 +178,6 @@ class ServerCore : public Manager {
     // Whether to allow assigning unused version labels to models that are not
     // available yet.
     bool allow_version_labels_for_unavailable_models = false;
-
-    // In a predict handler, this option specifies how to serialize tensors
-    // (e.g: as proto fields or as proto content).
-    // Serialize as proto fields by default, for backward compatibility.
-    internal::PredictResponseTensorSerializationOption
-        predict_response_tensor_serialization_option =
-            internal::PredictResponseTensorSerializationOption::kAsProtoField;
   };
 
   virtual ~ServerCore() = default;
@@ -257,10 +249,10 @@ class ServerCore : public Manager {
     return options_.server_request_logger->Log(request, response, log_metadata);
   }
 
-  internal::PredictResponseTensorSerializationOption
-  predict_response_tensor_serialization_option() const {
-    return options_.predict_response_tensor_serialization_option;
-  }
+  // internal::PredictResponseTensorSerializationOption
+  // predict_response_tensor_serialization_option() const {
+  //   return options_.predict_response_tensor_serialization_option;
+  // }
 
  protected:
   ServerCore(Options options);

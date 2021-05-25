@@ -19,7 +19,7 @@ limitations under the License.
 #include <memory>
 
 #include "grpcpp/server.h"
-#include "tensorflow/core/kernels/batching_util/periodic_function.h"
+// #include "tensorflow/core/kernels/batching_util/periodic_function.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/platform/cpu_info.h"
 #include "tensorflow/core/platform/types.h"
@@ -27,6 +27,7 @@ limitations under the License.
 #include "tensorflow_serving/model_servers/model_service_impl.h"
 #include "tensorflow_serving/model_servers/prediction_service_impl.h"
 #include "tensorflow_serving/model_servers/server_core.h"
+#include "tensorflow_serving/util/tensorflow/periodic_function.h"
 
 namespace tensorflow {
 namespace serving {
@@ -54,7 +55,6 @@ class Server {
     //
     bool enable_batching = false;
     bool allow_version_labels_for_unavailable_models = false;
-    float per_process_gpu_memory_fraction = 0;
     tensorflow::string batching_parameters_file;
     tensorflow::string model_name;
     tensorflow::int32 max_num_load_retries = 5;
@@ -62,14 +62,6 @@ class Server {
     tensorflow::int32 file_system_poll_wait_seconds = 1;
     bool flush_filesystem_caches = true;
     tensorflow::string model_base_path;
-    tensorflow::string saved_model_tags;
-    // Tensorflow session parallelism of zero means that both inter and intra op
-    // thread pools will be auto configured.
-    tensorflow::int64 tensorflow_session_parallelism = 0;
-
-    // Zero means that the thread pools will be auto configured.
-    tensorflow::int64 tensorflow_intra_op_parallelism = 0;
-    tensorflow::int64 tensorflow_inter_op_parallelism = 0;
     tensorflow::string platform_config_file;
     tensorflow::string ssl_config_file;
     string model_config_file;
@@ -82,7 +74,8 @@ class Server {
     // Tensorflow session run options.
     bool enforce_session_run_timeout = true;
     bool remove_unused_fields_from_bundle_metagraph = true;
-    bool use_tflite_model = false;
+    // BRPC configuration
+    tensorflow::int32 brpc_port = 0;
 
     Options();
   };
@@ -91,9 +84,9 @@ class Server {
   // started as part of BuildAndStart() call.
   ~Server();
 
-  // Build and start gRPC (and optionally HTTP) server, to be ready to
-  // accept and process new requests over gRPC (and optionally HTTP/REST).
-  Status BuildAndStart(const Options& server_options);
+  // Build and start the XGBoost's gRPC (and optionally HTTP) server, to be
+  // ready to accept and process new requests over gRPC (and optionally HTTP/REST).
+  Status BuildAndStartXGBoost(const Options& server_options);
 
   // Wait for servers started in BuildAndStart() above to terminate.
   // This will block the current thread until termination is successful.
@@ -106,7 +99,7 @@ class Server {
 
   std::unique_ptr<ServerCore> server_core_;
   std::unique_ptr<ModelServiceImpl> model_service_;
-  std::unique_ptr<PredictionServiceImpl> prediction_service_;
+  std::unique_ptr<XgboostPredictionServiceImpl> xgboost_prediction_service_;
   std::unique_ptr<::grpc::Server> grpc_server_;
   std::unique_ptr<net_http::HTTPServerInterface> http_server_;
   // A thread that calls PollFilesystemAndReloadConfig() periodically if

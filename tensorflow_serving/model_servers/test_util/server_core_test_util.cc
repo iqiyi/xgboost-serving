@@ -20,10 +20,10 @@ limitations under the License.
 #include "tensorflow_serving/core/availability_preserving_policy.h"
 #include "tensorflow_serving/core/test_util/fake_loader_source_adapter.h"
 #include "tensorflow_serving/model_servers/model_platform_types.h"
-#include "tensorflow_serving/model_servers/platform_config_util.h"
-#include "tensorflow_serving/servables/tensorflow/saved_model_bundle_source_adapter.pb.h"
-#include "tensorflow_serving/servables/tensorflow/session_bundle_config.pb.h"
-#include "tensorflow_serving/servables/tensorflow/session_bundle_source_adapter.pb.h"
+// #include "tensorflow_serving/model_servers/platform_config_util.h"
+// #include "tensorflow_serving/servables/tensorflow/saved_model_bundle_source_adapter.pb.h"
+// #include "tensorflow_serving/servables/tensorflow/session_bundle_config.pb.h"
+// #include "tensorflow_serving/servables/tensorflow/session_bundle_source_adapter.pb.h"
 #include "tensorflow_serving/test_util/test_util.h"
 
 namespace tensorflow {
@@ -32,13 +32,13 @@ namespace test_util {
 
 namespace {
 
-void AddSessionRunLoadThreadPool(SessionBundleConfig* const bundle_config) {
-  auto* const session_config = bundle_config->mutable_session_config();
-  session_config->add_session_inter_op_thread_pool();
-  // The second pool will be used for loading.
-  session_config->add_session_inter_op_thread_pool()->set_num_threads(4);
-  bundle_config->mutable_session_run_load_threadpool_index()->set_value(1);
-}
+// void AddSessionRunLoadThreadPool(SessionBundleConfig* const bundle_config) {
+//   auto* const session_config = bundle_config->mutable_session_config();
+//   session_config->add_session_inter_op_thread_pool();
+//   // The second pool will be used for loading.
+//   session_config->add_session_inter_op_thread_pool()->set_num_threads(4);
+//   bundle_config->mutable_session_run_load_threadpool_index()->set_value(1);
+// }
 
 ServerCore::Options GetDefaultOptions(const bool use_saved_model) {
   ServerCore::Options options;
@@ -54,11 +54,11 @@ ServerCore::Options GetDefaultOptions(const bool use_saved_model) {
     return Status::OK();
   };
 
-  SessionBundleConfig bundle_config;
-  AddSessionRunLoadThreadPool(&bundle_config);
+  // SessionBundleConfig bundle_config;
+  // AddSessionRunLoadThreadPool(&bundle_config);
 
-  options.platform_config_map =
-      CreateTensorFlowPlatformConfigMap(bundle_config, use_saved_model);
+  // options.platform_config_map =
+  //     CreateTensorFlowPlatformConfigMap(bundle_config, use_saved_model);
   ::google::protobuf::Any fake_source_adapter_config;
   fake_source_adapter_config.PackFrom(
       test_util::FakeLoaderSourceAdapterConfig());

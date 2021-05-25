@@ -105,35 +105,35 @@ Status PreProcessPrediction(const SignatureDef& signature,
                           "}."));
     }
     Tensor tensor;
-    if (!tensor.FromProto(input.second)) {
-      return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
-                                "tensor parsing error: " + alias);
-    }
+    // if (!tensor.FromProto(input.second)) {
+    //   return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+    //                             "tensor parsing error: " + alias);
+    // }
     inputs->emplace_back(std::make_pair(iter->second.name(), tensor));
   }
 
   // Prepare run target.
   std::set<string> seen_outputs;
-  std::vector<string> output_filter(request.output_filter().begin(),
-                                    request.output_filter().end());
-  for (auto& alias : output_filter) {
-    auto iter = signature.outputs().find(alias);
-    if (iter == signature.outputs().end()) {
-      return tensorflow::Status(
-          tensorflow::error::INVALID_ARGUMENT,
-          strings::StrCat("output tensor alias not found in signature: ", alias,
-                          " Outputs expected to be in the set {",
-                          absl::StrJoin(GetMapKeys(signature.outputs()), ","),
-                          "}."));
-    }
-    if (seen_outputs.find(alias) != seen_outputs.end()) {
-      return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
-                                "duplicate output tensor alias: " + alias);
-    }
-    seen_outputs.insert(alias);
-    output_tensor_names->emplace_back(iter->second.name());
-    output_tensor_aliases->emplace_back(alias);
-  }
+  // std::vector<string> output_filter(request.output_filter().begin(),
+  //                                   request.output_filter().end());
+  // for (auto& alias : output_filter) {
+  //   auto iter = signature.outputs().find(alias);
+  //   if (iter == signature.outputs().end()) {
+  //     return tensorflow::Status(
+  //         tensorflow::error::INVALID_ARGUMENT,
+  //         strings::StrCat("output tensor alias not found in signature: ", alias,
+  //                         " Outputs expected to be in the set {",
+  //                         absl::StrJoin(GetMapKeys(signature.outputs()), ","),
+  //                         "}."));
+  //   }
+  //   if (seen_outputs.find(alias) != seen_outputs.end()) {
+  //     return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+  //                               "duplicate output tensor alias: " + alias);
+  //   }
+  //   seen_outputs.insert(alias);
+  //   output_tensor_names->emplace_back(iter->second.name());
+  //   output_tensor_aliases->emplace_back(alias);
+  // }
   // When no output is specified, fetch all output tensors specified in
   // the signature.
   if (output_tensor_names->empty()) {

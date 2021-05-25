@@ -132,11 +132,7 @@ serving_proto_library(
     srcs = ["prediction_log.proto"],
     cc_api_version = 2,
     deps = [
-        ":classification_proto",
-        ":inference_proto",
         ":predict_proto",
-        ":regression_proto",
-        ":session_service_proto",
         "//tensorflow_serving/core:logging_proto",
     ],
 )
@@ -146,11 +142,7 @@ serving_proto_library_py(
     srcs = ["prediction_log.proto"],
     proto_library = "prediction_log_proto",
     deps = [
-        ":classification_proto_py_pb2",
-        ":inference_proto_py_pb2",
         ":predict_proto_py_pb2",
-        ":regression_proto_py_pb2",
-        ":session_service_proto_py_pb2",
         "//tensorflow_serving/core:logging_proto_py_pb2",
     ],
 )
@@ -162,11 +154,7 @@ serving_proto_library(
     cc_api_version = 2,
     cc_grpc_version = 1,
     deps = [
-        ":classification_proto",
-        ":get_model_metadata_proto",
-        ":inference_proto",
         ":predict_proto",
-        ":regression_proto",
     ],
 )
 
@@ -178,11 +166,7 @@ py_library(
     ],
     srcs_version = "PY2AND3",
     deps = [
-        ":classification_proto_py_pb2",
-        ":get_model_metadata_proto_py_pb2",
-        ":inference_proto_py_pb2",
         ":predict_proto_py_pb2",
-        ":regression_proto_py_pb2",
     ],
 )
 

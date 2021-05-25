@@ -51,10 +51,10 @@ Status RequestLogger::Log(const google::protobuf::Message& request,
   LogMetadata log_metadata_with_config = log_metadata;
   *log_metadata_with_config.mutable_sampling_config() =
       logging_config_.sampling_config();
-  if (!saved_model_tags_.empty()) {
-    *log_metadata_with_config.mutable_saved_model_tags() = {
-        saved_model_tags_.begin(), saved_model_tags_.end()};
-  }
+  // if (!saved_model_tags_.empty()) {
+  //   *log_metadata_with_config.mutable_saved_model_tags() = {
+  //       saved_model_tags_.begin(), saved_model_tags_.end()};
+  // }
   if (uniform_sampler_.Sample(sampling_rate)) {
     const auto status = [&]() {
       std::unique_ptr<google::protobuf::Message> log;

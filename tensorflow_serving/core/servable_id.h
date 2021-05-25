@@ -21,7 +21,7 @@ limitations under the License.
 #include <unordered_map>
 
 #include "tensorflow/core/lib/strings/strcat.h"
-#include "tensorflow/core/platform/types.h"
+
 #include "tensorflow_serving/util/hash.h"
 
 namespace tensorflow {

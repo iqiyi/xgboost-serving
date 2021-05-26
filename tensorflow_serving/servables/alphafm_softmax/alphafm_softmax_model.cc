@@ -139,7 +139,16 @@ AlphafmSoftmaxModel::AlphafmSoftmaxModel() {
   ftrl_model_.reset(new AlphafmSoftmaxModel::ftrl_model());
 }
 
-AlphafmSoftmaxModel::AlphafmSoftmaxModel(std::string model_path) {}
+AlphafmSoftmaxModel::AlphafmSoftmaxModel(std::string model_path) {
+  LOG(INFO) << "Call the constructor AlphafmSoftmaxModel(model_path).";
+  ftrl_model_.reset(new AlphafmSoftmaxModel::ftrl_model());
+  Status status = LoadModel(model_path);
+  if (status.ok()) {
+    LOG(INFO) << "Load the AlphafmSoftmax Model successfully.";
+  } else {
+    LOG(ERROR) << "Failed to load the AlphafmSoftmax Model.";
+  }
+}
 
 int AlphafmSoftmaxModel::GetClassNum() const {
   return ftrl_model_->get_class_num();

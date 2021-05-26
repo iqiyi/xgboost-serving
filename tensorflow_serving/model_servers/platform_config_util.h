@@ -29,6 +29,19 @@ namespace serving {
 PlatformConfigMap CreateTensorFlowPlatformConfigMap(
     const SessionBundleConfig& session_bundle_config, bool use_saved_model);
 
+// Creates a PlatformConfigMap containing a single entry with the key as xgboost
+// and the value as a SourceAdapter config proto for XgboostSourceAdapter.
+PlatformConfigMap CreateXgboostPlatformConfigMap();
+
+// Creates a PlatformConfigMap containing a single entry with the key as alphafm
+// and the value as a SourceAdapter config proto for AlphafmSourceAdapter.
+PlatformConfigMap CreateAlphafmPlatformConfigMap();
+
+// Creates a PlatformConfigMap containing a single entry with the key as
+// alphafm_softmax and the value as a SourceAdapter config proto for
+// AlphafmSoftmaxSourceAdapter.
+PlatformConfigMap CreateAlphafmSoftmaxPlatformConfigMap();
+
 }  // namespace serving
 }  // namespace tensorflow
 

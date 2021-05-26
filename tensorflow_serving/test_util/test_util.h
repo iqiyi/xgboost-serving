@@ -45,6 +45,8 @@ string ContribTestSrcDirPath(const string& relative_path);
 // tensorflow_serving.
 string TestSrcDirPath(const string& relative_path);
 
+string GetCWD();
+
 // Simple implementation of a proto matcher comparing string representations.
 //
 // IMPORTANT: Only use this for protos whose textual representation is

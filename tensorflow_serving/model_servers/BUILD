@@ -56,6 +56,9 @@ cc_library(
         "//tensorflow_serving/servables/tensorflow:saved_model_bundle_source_adapter_proto",
         "//tensorflow_serving/servables/tensorflow:session_bundle_config_proto",
         "//tensorflow_serving/servables/tensorflow:session_bundle_source_adapter_proto",
+        "//tensorflow_serving/servables/xgboost:xgboost_source_adapter_proto",
+        "//tensorflow_serving/servables/alphafm:alphafm_source_adapter_proto",
+        "//tensorflow_serving/servables/alphafm_softmax:alphafm_softmax_source_adapter_proto",
     ],
 )
 

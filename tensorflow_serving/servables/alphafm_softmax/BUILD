@@ -56,7 +56,7 @@ cc_library(
     srcs = ["alphafm_softmax_bundle.cc"],
     hdrs = ["alphafm_softmax_bundle.h", "//tensorflow_serving/servables/xgboost:xgboost_constants.h"],
     visibility = [
-	"//visibility:public",
+        "//visibility:public",
     ],
     deps = [
         "@xgboost//:xgboost",
@@ -75,11 +75,11 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
-	":alphafm_softmax_bundle",
-	"//tensorflow_serving/apis:predict_proto",
-	"//tensorflow_serving/servables/xgboost:util",
-	"//tensorflow_serving/model_servers:server_core",
-	"@brpc//:bvar",
+        ":alphafm_softmax_bundle",
+        "//tensorflow_serving/apis:predict_proto",
+        "//tensorflow_serving/servables/xgboost:util",
+        "//tensorflow_serving/model_servers:server_core",
+        "@brpc//:bvar",
     ]
 )
 
@@ -140,9 +140,9 @@ cc_test(
         ":alphafm_softmax_source_adapter",
         "//tensorflow_serving/core/test_util:test_main",
         "@org_tensorflow//tensorflow/core:test",
-	"//tensorflow_serving/sources/storage_path:file_system_storage_path_source",
-	"//tensorflow_serving/core:aspired_versions_manager",
-	"//tensorflow_serving/core:availability_preserving_policy",
+        "//tensorflow_serving/sources/storage_path:file_system_storage_path_source",
+        "//tensorflow_serving/core:aspired_versions_manager",
+        "//tensorflow_serving/core:availability_preserving_policy",
     ],
 )
 
@@ -157,10 +157,11 @@ cc_test(
     ],
     deps = [
         ":predict_impl",
+        ":alphafm_softmax_source_adapter_proto",
         "//tensorflow_serving/core/test_util:test_main",
+        "//tensorflow_serving/test_util:test_util",
+        "//tensorflow_serving/core:availability_preserving_policy",
+        "//tensorflow_serving/model_servers:platform_config_util",
         "@org_tensorflow//tensorflow/core:test",
-	"//tensorflow_serving/sources/storage_path:file_system_storage_path_source",
-	"//tensorflow_serving/core:aspired_versions_manager",
-	"//tensorflow_serving/core:availability_preserving_policy",
     ],
 )

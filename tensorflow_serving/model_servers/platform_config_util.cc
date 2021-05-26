@@ -19,6 +19,9 @@ limitations under the License.
 #include "tensorflow_serving/model_servers/model_platform_types.h"
 #include "tensorflow_serving/servables/tensorflow/saved_model_bundle_source_adapter.pb.h"
 #include "tensorflow_serving/servables/tensorflow/session_bundle_source_adapter.pb.h"
+#include "tensorflow_serving/servables/xgboost/xgboost_source_adapter.pb.h"
+#include "tensorflow_serving/servables/alphafm/alphafm_source_adapter.pb.h"
+#include "tensorflow_serving/servables/alphafm_softmax/alphafm_softmax_source_adapter.pb.h"
 
 namespace tensorflow {
 namespace serving {
@@ -40,6 +43,36 @@ PlatformConfigMap CreateTensorFlowPlatformConfigMap(
     source_adapter_config.PackFrom(session_bundle_source_adapter_config);
   }
   (*(*platform_config_map.mutable_platform_configs())[kTensorFlowModelPlatform]
+        .mutable_source_adapter_config()) = source_adapter_config;
+  return platform_config_map;
+}
+
+PlatformConfigMap CreateXgboostPlatformConfigMap() {
+  PlatformConfigMap platform_config_map;
+  ::google::protobuf::Any source_adapter_config;
+  XgboostSourceAdapterConfig xgboost_source_adapter_config;
+  source_adapter_config.PackFrom(xgboost_source_adapter_config);
+  (*(*platform_config_map.mutable_platform_configs())["xgboost"]
+        .mutable_source_adapter_config()) = source_adapter_config;
+  return platform_config_map;
+}
+
+PlatformConfigMap CreateAlphafmPlatformConfigMap() {
+  PlatformConfigMap platform_config_map;
+  ::google::protobuf::Any source_adapter_config;
+  AlphafmSourceAdapterConfig alphafm_source_adapter_config;
+  source_adapter_config.PackFrom(alphafm_source_adapter_config);
+  (*(*platform_config_map.mutable_platform_configs())["alphafm"]
+        .mutable_source_adapter_config()) = source_adapter_config;
+  return platform_config_map;
+}
+
+PlatformConfigMap CreateAlphafmSoftmaxPlatformConfigMap() {
+  PlatformConfigMap platform_config_map;
+  ::google::protobuf::Any source_adapter_config;
+  AlphafmSoftmaxSourceAdapterConfig alphafm_softmax_source_adapter_config;
+  source_adapter_config.PackFrom(alphafm_softmax_source_adapter_config);
+  (*(*platform_config_map.mutable_platform_configs())["alphafm_softmax"]
         .mutable_source_adapter_config()) = source_adapter_config;
   return platform_config_map;
 }

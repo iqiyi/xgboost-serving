@@ -13,6 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
+#include <unistd.h>
+
 #include "tensorflow_serving/test_util/test_util.h"
 
 #include "tensorflow/core/lib/io/path.h"
@@ -34,6 +36,10 @@ string TestSrcDirPath(const string& relative_path) {
   const string base_path = tensorflow::io::JoinPath(
       getenv("TEST_SRCDIR"), "tf_serving/tensorflow_serving");
   return tensorflow::io::JoinPath(base_path, relative_path);
+}
+
+string GetCWD() {
+  return get_current_dir_name();
 }
 
 ProtoStringMatcher::ProtoStringMatcher(const string& expected)

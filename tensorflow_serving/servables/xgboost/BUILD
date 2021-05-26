@@ -133,7 +133,11 @@ cc_test(
     ],
     deps = [
         ":predict_impl",
+        ":xgboost_source_adapter_proto",
         "//tensorflow_serving/core/test_util:test_main",
+        "//tensorflow_serving/test_util:test_util",
+        "//tensorflow_serving/core:availability_preserving_policy",
+        "//tensorflow_serving/model_servers:platform_config_util",
         "@org_tensorflow//tensorflow/core:lib",
         "@org_tensorflow//tensorflow/core:test",
     ],

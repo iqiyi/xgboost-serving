@@ -15,9 +15,9 @@ limitations under the License.
 
 #include <iostream>
 
+#include "google/protobuf/map.h"
 #include "grpcpp/create_channel.h"
 #include "grpcpp/security/credentials.h"
-#include "google/protobuf/map.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/platform/types.h"
 #include "tensorflow/core/util/command_line_flags.h"
@@ -33,26 +33,28 @@ using tensorflow::serving::PredictionService;
 using tensorflow::serving::FeatureScore;
 using tensorflow::serving::FeatureScoreVector;
 
-typedef google::protobuf::Map<tensorflow::string, tensorflow::TensorProto> OutMap;
+typedef google::protobuf::Map<tensorflow::string, tensorflow::TensorProto>
+    OutMap;
 
 class ServingClient {
- public:
+public:
   ServingClient(std::shared_ptr<Channel> channel)
       : stub_(PredictionService::NewStub(channel)) {}
 
-  tensorflow::string callPredict(const tensorflow::string& model_name) {
+  tensorflow::string callPredict(const tensorflow::string &model_name) {
     PredictRequest predictRequest;
     PredictResponse response;
     ClientContext context;
 
     predictRequest.mutable_model_spec()->set_name(model_name);
 
-    google::protobuf::Map<tensorflow::string, FeatureScoreVector>& inputs =
+    google::protobuf::Map<tensorflow::string, FeatureScoreVector> &inputs =
         *predictRequest.mutable_inputs();
 
     // xgboost features
     FeatureScoreVector xgboost_feature_score_vector;
-    auto xgboost_feature_score = xgboost_feature_score_vector.add_feature_score();
+    auto xgboost_feature_score =
+        xgboost_feature_score_vector.add_feature_score();
     xgboost_feature_score->add_id(2);
     xgboost_feature_score->add_score(1);
     xgboost_feature_score->add_id(34);
@@ -78,18 +80,17 @@ class ServingClient {
     if (status.ok()) {
       std::cout << "call predict ok" << std::endl;
       std::cout << "outputs size is " << response.outputs_size() << std::endl;
-      OutMap& map_outputs = *response.mutable_outputs();
-      if(map_outputs.contains("score")) {
-        tensorflow::TensorProto& result_tensor_proto = map_outputs.at("score");
+      OutMap &map_outputs = *response.mutable_outputs();
+      if (map_outputs.contains("score")) {
+        tensorflow::TensorProto &result_tensor_proto = map_outputs.at("score");
         tensorflow::Tensor tensor;
         bool converted = tensor.FromProto(result_tensor_proto);
         if (converted) {
-          std::cout << "the result tensor[" << 0
-                    << "] is:" << std::endl
+          std::cout << "the result tensor[" << 0 << "] is:" << std::endl
                     << tensor.SummarizeValue(tensor.dim_size(0)) << std::endl;
         } else {
-          std::cout << "the result tensor[" << 0
-                    << "] convert failed." << std::endl;
+          std::cout << "the result tensor[" << 0 << "] convert failed."
+                    << std::endl;
         }
       }
       return "Done.";
@@ -100,11 +101,11 @@ class ServingClient {
     }
   }
 
- private:
+private:
   std::unique_ptr<PredictionService::Stub> stub_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   tensorflow::string server_port = "localhost:8500";
   tensorflow::string model_name = "test";
   std::vector<tensorflow::Flag> flag_list = {
@@ -113,7 +114,8 @@ int main(int argc, char** argv) {
       tensorflow::Flag("model_name", &model_name, "name of model")};
   tensorflow::string usage = tensorflow::Flags::Usage(argv[0], flag_list);
   const bool parse_result = tensorflow::Flags::Parse(&argc, argv, flag_list);
-  ServingClient guide(grpc::CreateChannel(server_port, grpc::InsecureChannelCredentials()));
-  std::cout<<guide.callPredict(model_name)<<std::endl;
+  ServingClient guide(
+      grpc::CreateChannel(server_port, grpc::InsecureChannelCredentials()));
+  std::cout << guide.callPredict(model_name) << std::endl;
   return 0;
 }

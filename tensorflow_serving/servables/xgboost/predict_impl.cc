@@ -47,8 +47,12 @@ Status XgboostPredictor::PredictWithModelSpec(ServerCore *core,
                                               PredictResponse *response) {
   ServableHandle<XgboostBundle> bundle;
   TF_RETURN_IF_ERROR(core->GetServableHandle(model_spec, &bundle));
-  int32_t option_mask = 2;
-  uint32_t ntree_limit = 0;
+  int32_t option_mask = request.option_mask();
+  if ((0 != option_mask) && (1 != option_mask) && (2 != option_mask)) {
+    return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
+                              "The option_mask input must be 0/1/2");
+  }
+  uint32_t ntree_limit = request.ntree_limit();
   if (!request.inputs().contains(kXGBoostFeaturesName)) {
     return tensorflow::Status(tensorflow::error::INVALID_ARGUMENT,
                               "No xgboost_features input found");

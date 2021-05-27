@@ -162,6 +162,8 @@ TEST_F(PredictImplTest, PredictionSuccess) {
   XgboostPredictor predictor;
   ModelSpec *model_spec = request.mutable_model_spec();
   model_spec->set_name("test");
+  // Optional parameters.
+  request.set_option_mask(2);
   google::protobuf::Map<tensorflow::string, FeatureScoreVector> &inputs =
       *request.mutable_inputs();
 
@@ -191,6 +193,40 @@ TEST_F(PredictImplTest, PredictionSuccess) {
       49, 39, 56, 52, 49, 61, 36, 49, 48, 39, 31, 44, 31, 46, 32, 33,
       56, 56, 40, 53, 51, 31, 31, 31, 62, 39, 39, 38, 35, 56};
   EXPECT_THAT(out_vec, output_tensor_vec);
+}
+
+TEST_F(PredictImplTest, PredictionSuccessWithOptionalParameters) {
+  PredictRequest request;
+  PredictResponse response;
+  XgboostPredictor predictor;
+  ModelSpec *model_spec = request.mutable_model_spec();
+  model_spec->set_name("test");
+  model_spec->mutable_version()->set_value(1);
+  // Optional parameters.
+  request.set_option_mask(0);
+  request.set_ntree_limit(0u);
+  google::protobuf::Map<tensorflow::string, FeatureScoreVector> &inputs =
+      *request.mutable_inputs();
+
+  // xgboost features
+  FeatureScoreVector xgboost_feature_score_vector;
+  FeatureScore *xgboost_feature_score =
+      xgboost_feature_score_vector.add_feature_score();
+  xgboost_feature_score->add_id(2);
+  xgboost_feature_score->add_score(1);
+  xgboost_feature_score->add_id(34);
+  xgboost_feature_score->add_score(1);
+  xgboost_feature_score->add_id(2000);
+  xgboost_feature_score->add_score(0.64667);
+  xgboost_feature_score->add_id(2206);
+  xgboost_feature_score->add_score(0.727273);
+  inputs["xgboost_features"] = xgboost_feature_score_vector;
+  TF_EXPECT_OK(predictor.Predict(GetServerCore(), request, &response));
+  TensorProto output_tensor_proto = response.outputs().at("value");
+  EXPECT_EQ(1, output_tensor_proto.float_val().size());
+  EXPECT_THAT(
+      "0.0580",
+      std::to_string((*output_tensor_proto.float_val().begin())).substr(0, 6));
 }
 } // namespace
 } // namespace serving

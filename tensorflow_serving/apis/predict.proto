@@ -25,6 +25,10 @@ message PredictRequest {
   // Input FeatureScoreVector.
   // One for the XGBoost inputs and the other for the FM inputs.
   map<string, FeatureScoreVector> inputs = 2;
+  // For XGBoost only models.
+  int32 option_mask = 3;
+  // For XGBoost only models.
+  uint32 ntree_limit = 4;
 }
 
 // Response for PredictRequest on successful run.

@@ -10,7 +10,7 @@ General installation instructions are [on the Docker site](https://docs.docker.c
 
 ## Clone the source
 
-After installing Docker, we need to get the source we want to build from. We will use Git to clone the master branch of XGBoost Serving:
+After installing Docker, we need to get the source we want to build from. We will use Git to clone the xgboost branch of XGBoost Serving:
 
 ```
 git clone https://github.com/hzy001/xgboost-serving.git

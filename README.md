@@ -1,3 +1,6 @@
+[![Build](https://github.com/hzy001/xgboost-serving/actions/workflows/build.yaml/badge.svg)](https://github.com/hzy001/xgboost-serving/actions/workflows/build.yaml)
+[![Test](https://github.com/hzy001/xgboost-serving/actions/workflows/test.yaml/badge.svg)](https://github.com/hzy001/xgboost-serving/actions/workflows/test.yaml)
+
 # XGBoost Serving
 
 This is a fork of TensorFlow Serving, extended with the support for [XGBoost](https://github.com/dmlc/xgboost), [alphaFM](https://github.com/CastellanZhang/alphaFM) and [alphaFM_softmax](https://github.com/CastellanZhang/alphaFM_softmax) frameworks. For more information about TensorFlow Serving, switch to the `master` branch or visit the [TensorFlow Serving website](https://github.com/tensorflow/serving).

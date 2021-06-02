@@ -1,0 +1,15 @@
+name: Build
+
+on:
+  push:
+    branches: [ xgboost ]
+  pull_request:
+    branches: [ xgboost ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: build
+        run: bazel build -c opt //tensorflow_serving/model_servers:tensorflow_model_server

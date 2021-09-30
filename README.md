@@ -72,4 +72,4 @@ individually and/or extend it to serve new use cases.
 ## Feedback and Getting involved
 
 * Report bugs, ask questions or give suggestions by [Github
-  Issues](https://github.com/hzy001/xgboost-serving/issues)
+  Issues](https://github.com/iqiyi/xgboost-serving/issues)

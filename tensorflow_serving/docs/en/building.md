@@ -62,7 +62,7 @@ export PATH="$PATH:$HOME/bin"
 
 ### CMake
 
-XGBoost Serving requires CMake 3.13 or higher to build XGBoost. You can find the CMake binary from [here](https://github.com/Kitware/CMake/releases). Suppose you download cmake-3.18.0-Linux-x86_64.sh, run the following command to install CMake:
+XGBoost Serving requires CMake 3.14 or higher to build XGBoost. You can find the CMake binary from [here](https://github.com/Kitware/CMake/releases). Suppose you download cmake-3.18.0-Linux-x86_64.sh, run the following command to install CMake:
 
 ```
 chmod +x cmake-3.18.0-Linux-x86_64.sh

@@ -40,6 +40,8 @@ limitations under the License.
 #include "tensorflow/core/lib/core/stringpiece.h"
 #include "tensorflow_serving/apis/model.pb.h"
 
+using tensorflow::serving::FeatureScoreVector;
+
 namespace tensorflow {
 namespace serving {
 namespace {
@@ -688,6 +690,95 @@ Status FillTensorMapFromInputsMap(
 //   }
 //   return errors::InvalidArgument("Missing 'inputs' or 'instances' key");
 // }
+
+Status FillXgboostOptions(const rapidjson::Value::MemberIterator& itr, PredictRequest* request) {
+  const rapidjson::Value& val = itr->value;
+  string name = itr->name.GetString();
+  if ("option_mask" == name && val.IsInt()) {
+    request->set_option_mask(val.GetInt());
+  } else if ("ntree_limit" == name && val.IsUint()) {
+    request->set_ntree_limit(val.GetUint());
+  } else {
+    return errors::InvalidArgument(name + " isn't valid.");
+  }
+  return Status::OK();
+}
+
+Status FillFeatureScoreVector(const rapidjson::Value::MemberIterator& itr, PredictRequest* request) {
+  const rapidjson::Value& val = itr->value;
+  string feature_name = itr->name.GetString();
+  if (val.IsArray()) {
+    FeatureScoreVector feature_score_vector;
+    for(auto i=0; i<val.Size(); i++) {
+      if(val[i].IsObject()) {
+        auto itr_feature_score = val[i].FindMember("feature_score");
+        if (itr_feature_score != val[i].MemberEnd()) {
+          const rapidjson::Value& val_feature_score = itr_feature_score->value;
+          if(val_feature_score.IsObject()) {
+            auto feature_score = feature_score_vector.add_feature_score();
+            auto itr_id = val_feature_score.FindMember("id");
+            auto itr_score = val_feature_score.FindMember("score");
+            if(itr_id != val_feature_score.MemberEnd() && itr_score != val_feature_score.MemberEnd()) {
+              const rapidjson::Value& val_id = itr_id->value;
+              const rapidjson::Value& val_score = itr_score->value;
+              for(auto j=0;j<val_id.Size();j++) {
+                feature_score->add_id(val_id[j].GetUint64());
+                feature_score->add_score(val_score[j].GetFloat());
+              }
+            } else {
+              return errors::InvalidArgument(feature_name + " isn't a valid object.");
+	    }
+	  } else {
+            return errors::InvalidArgument(feature_name + " isn't a valid object.");
+          }
+        } else {
+          return errors::InvalidArgument(feature_name + " isn't a valid object.");
+        }
+      } else {
+        return errors::InvalidArgument(feature_name + " isn't a valid object.");
+      }
+    }
+    (*request->mutable_inputs())[feature_name] = feature_score_vector;
+  } else {
+    return errors::InvalidArgument(feature_name + " isn't a valid object.");
+  }
+  return Status::OK();
+}
+
+Status FillPredictRequestFromJson(
+    const absl::string_view json,
+    PredictRequest* request, JsonPredictRequestFormat* format, const string method) {
+  // Fill the request
+  rapidjson::Document doc;
+  *format = JsonPredictRequestFormat::kColumnar;
+  TF_RETURN_IF_ERROR(ParseJson(json, &doc));
+  // Fill the xgboost_features field for XGBoost models
+  auto itr_xgboost = doc.FindMember("xgboost_features");
+  if (itr_xgboost != doc.MemberEnd()) {
+    TF_RETURN_IF_ERROR(FillFeatureScoreVector(itr_xgboost, request));
+  } else {
+    return errors::InvalidArgument("Missing 'xgboost_features' key");
+  }
+  if ("predict" == method) {
+    auto itr_option_mask = doc.FindMember("option_mask");
+    auto itr_ntree_limit = doc.FindMember("ntree_limit");
+    if (itr_option_mask != doc.MemberEnd()) {
+      TF_RETURN_IF_ERROR(FillXgboostOptions(itr_option_mask, request));
+    }
+    if (itr_ntree_limit != doc.MemberEnd()) {
+      TF_RETURN_IF_ERROR(FillXgboostOptions(itr_ntree_limit, request));
+    }
+  } else if ("predict_alphafm" == method || "predict_softmax" == method) {
+    // Fill the fm_features field for alphaFM or alphaFM_softmax models
+    auto itr_fm = doc.FindMember("fm_features");
+    if (itr_fm != doc.MemberEnd()) {
+      TF_RETURN_IF_ERROR(FillFeatureScoreVector(itr_fm, request));
+    } else {
+      return errors::InvalidArgument("Missing 'fm_features' key");
+    }
+  }
+  return Status::OK();
+}
 
 namespace {
 

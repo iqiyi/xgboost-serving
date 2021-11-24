@@ -268,6 +268,8 @@ cc_library(
         "//tensorflow_serving/core:servable_handle",
         "//tensorflow_serving/util:json_tensor",
         "//tensorflow_serving/servables/xgboost:predict_impl",
+        "//tensorflow_serving/servables/alphafm:predict_impl",
+        "//tensorflow_serving/servables/alphafm_softmax:predict_impl",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
         "@com_google_absl//absl/types:optional",

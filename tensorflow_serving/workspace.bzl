@@ -62,9 +62,9 @@ def tf_serving_workspace():
     http_archive(
         name = "xgboost",
         urls = [
-            "https://github.com/dmlc/xgboost/releases/download/v1.4.1/xgboost.tar.gz",
+            "https://github.com/dmlc/xgboost/releases/download/v1.5.0/xgboost.tar.gz",
         ],
-        sha256 = "f3a37e5ddac10786e46423db874b29af413eed49fd9baed85035bbfee6fc6635",
+        sha256 = "25ee3adb9925d0529575c0f00a55ba42202a1cdb5fdd3fb6484b4088571326a5",
         build_file = "@//third_party/xgboost:BUILD",
         strip_prefix = "xgboost",
     )

@@ -55,7 +55,7 @@ HttpRestApiHandler::HttpRestApiHandler(const RunOptions& run_options,
       core_(core),
       predictor_(new XgboostPredictor()),
       prediction_api_regex_(
-          R"((?i)/v1/models/([^/:]+)(?:/versions/(\d+))?:(classify|regress|predict))"),
+          R"((?i)/v1/models/([^/:]+)(?:/versions/(\d+))?:(predict_alphafm|predict_softmax|predict))"),
       modelstatus_api_regex_(
           R"((?i)/v1/models(?:/([^/:]+))?(?:/versions/(\d+))?(?:\/(metadata))?)") {
 }
@@ -103,9 +103,9 @@ Status HttpRestApiHandler::ProcessRequest(
       }
       model_version = version;
     }
-    if (method == "predict") {
+    if (method == "predict" || method == "predict_alphafm" || method == "predict_softmax") {
       status = ProcessPredictRequest(model_name, model_version, request_body,
-                                     output);
+                                     output, method);
     }
   } else if (http_method == "GET" &&
              RE2::FullMatch(string(request_path), modelstatus_api_regex_,
@@ -128,7 +128,7 @@ Status HttpRestApiHandler::ProcessRequest(
 Status HttpRestApiHandler::ProcessPredictRequest(
     const absl::string_view model_name,
     const absl::optional<int64>& model_version,
-    const absl::string_view request_body, string* output) {
+    const absl::string_view request_body, string* output, const string method="predict") {
   auto start = std::chrono::system_clock::now();
   PredictRequest request;
   request.mutable_model_spec()->set_name(string(model_name));
@@ -137,16 +137,18 @@ Status HttpRestApiHandler::ProcessPredictRequest(
         model_version.value());
   }
   JsonPredictRequestFormat format;
-  // TF_RETURN_IF_ERROR(FillPredictRequestFromJson(
-  //     request_body,
-  //     [this, &request](const string& sig,
-  //                      ::google::protobuf::Map<string, TensorInfo>* map) {
-  //       return this->GetInfoMap(request.model_spec(), sig, map);
-  //     },
-  //     &request, &format));
+  TF_RETURN_IF_ERROR(FillPredictRequestFromJson(
+      request_body,
+      &request, &format, method));
 
   PredictResponse response;
-  TF_RETURN_IF_ERROR(predictor_->Predict(core_, request, &response));
+  if ("predict" == method) {
+    TF_RETURN_IF_ERROR(predictor_->Predict(core_, request, &response));
+  } else if("predict_alphafm" == method) {
+    TF_RETURN_IF_ERROR(alphafm_predictor_->Predict(core_, request, &response));
+  } else if("predict_softmax" == method) {
+    TF_RETURN_IF_ERROR(alphafm_softmax_predictor_->Predict(core_, request, &response));
+  }
   auto end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end - start;
   http_latency_recorder<<elapsed_seconds.count()*1000000;

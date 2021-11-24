@@ -147,6 +147,10 @@ tensorflow::Status FillPredictRequestFromJson(
         get_tensorinfo_map,
     PredictRequest* request, JsonPredictRequestFormat* format);
 
+tensorflow::Status FillPredictRequestFromJson(
+    const absl::string_view json,
+    PredictRequest* request, JsonPredictRequestFormat* format, const string method);
+
 // Fills ClassificationRequest proto from a JSON object.
 //
 // `json` string is parsed to create `Example` protos and added to

@@ -27,6 +27,8 @@ limitations under the License.
 #include "tensorflow/core/protobuf/config.pb.h"
 #include "tensorflow/core/protobuf/meta_graph.pb.h"
 #include "tensorflow_serving/servables/xgboost/predict_impl.h"
+#include "tensorflow_serving/servables/alphafm/predict_impl.h"
+#include "tensorflow_serving/servables/alphafm_softmax/predict_impl.h"
 
 #include <bvar/bvar.h>
 
@@ -92,7 +94,7 @@ class HttpRestApiHandler {
   Status ProcessPredictRequest(const absl::string_view model_name,
                                const absl::optional<int64>& model_version,
                                const absl::string_view request_body,
-                               string* output);
+                               string* output, const string method);
   Status ProcessModelStatusRequest(const absl::string_view model_name,
                                    const absl::string_view model_version_str,
                                    string* output);
@@ -105,6 +107,8 @@ class HttpRestApiHandler {
   const RunOptions run_options_;
   ServerCore* core_;
   std::unique_ptr<XgboostPredictor> predictor_;
+  std::unique_ptr<AlphafmPredictor> alphafm_predictor_;
+  std::unique_ptr<AlphafmSoftmaxPredictor> alphafm_softmax_predictor_;
   static bvar::LatencyRecorder http_latency_recorder;
   const RE2 prediction_api_regex_;
   const RE2 modelstatus_api_regex_;
